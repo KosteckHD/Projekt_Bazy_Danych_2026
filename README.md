@@ -1,5 +1,7 @@
-# bazy-danych-projekt
+# bazy-danych-projekt 42
 Project for Data Bases course at AGH University.
 Michał Kościanek, Michał Mąka
 Wypożyczalnia aut
-Typscript,NodeJs,Express
+Backend:Typescript,NodeJs,Express
+Frontend:React
+DB:Postgres
