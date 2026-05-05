@@ -12,12 +12,12 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./server/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
       - postgres_data:/var/lib/postgresql/data
 
   backend:
     build: 
-      context: ./server     # Dockerfile jest w folderze server
+      context: .     # Dockerfile jest w tym samym folderze co docker-compose
     container_name: wypozyczalnia-api
     restart: always
     ports:
@@ -31,7 +31,7 @@ services:
       - postgres-db         # Backend musi poczekać, aż baza najpierw wstanie
     volumes:
       # To pozwala na edytowanie kodu ("Live Reload" np. przez tsx watch) bez resetowania kontenera!
-      - ./server:/app
+      - .:/app
       - /app/node_modules
 
 volumes:
