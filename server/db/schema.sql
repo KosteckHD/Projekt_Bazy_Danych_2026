@@ -87,20 +87,20 @@ CREATE TYPE PaymentMethods AS ENUM(
     'Gift card'
 );
 
-CREATE IF NOT EXISTS TABLE Brands (
+CREATE TABLE IF NOT EXISTS Brands (
     brandId SERIAL PRIMARY KEY,
     brandName VARCHAR(255) NOT NULL,
     country Countries NOT NULL
 );
 
-CREATE IF NOT EXISTS TABLE Models (
+CREATE TABLE IF NOT EXISTS Models (
     modelId SERIAL PRIMARY KEY,
     brandId INTEGER REFERENCES Brands (brandId) NOT NULL,
     hourlyCost DECIMAL(10, 2) NOT NULL,
     modelDescription VARCHAR(255)
 );
 
-CREATE IF NOT EXISTS TABLE Cars (
+CREATE TABLE IF NOT EXISTS Cars (
     carId SERIAL PRIMARY KEY,
     modelId INTEGER REFERENCES Models (modelId) NOT NULL,
     status CarStatus NOT NULL,
@@ -113,7 +113,7 @@ CREATE IF NOT EXISTS TABLE Cars (
     bodyType BodyTypes NOT NULL
 );
 
-CREATE IF NOT EXISTS TABLE Users (
+CREATE TABLE IF NOT EXISTS Users (
     userId SERIAL PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     passwordHash VARCHAR(255) NOT NULL,
@@ -123,7 +123,7 @@ CREATE IF NOT EXISTS TABLE Users (
     role Roles NOT NULL
 );
 
-CREATE IF NOT EXISTS TABLE Rents (
+CREATE TABLE IF NOT EXISTS Rents (
     rentId SERIAL PRIMARY KEY,
     userId INTEGER REFERENCES Users (userId) NOT NULL,
     carId INTEGER REFERENCES Cars (carId) NOT NULL,
@@ -131,10 +131,10 @@ CREATE IF NOT EXISTS TABLE Rents (
     expectedEndDate timestamp NOT NULL,
     endDate timestamp,
     additionalCost DECIMAL(10, 2),
-    status
+    status RentStatus NOT NULL
 );
 
-CREATE IF NOT EXISTS TABLE TransactionHistory (
+CREATE TABLE IF NOT EXISTS TransactionHistory (
     transactionId SERIAL PRIMARY KEY,
     rentId INTEGER REFERENCES Rents (rentId) NOT NULL,
     status TransactionStatus NOT NULL,
