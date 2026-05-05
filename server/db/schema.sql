@@ -87,6 +87,11 @@ CREATE TYPE PaymentMethods AS ENUM(
     'Gift card'
 );
 
+CREATE TYPE PaymentDirection AS ENUM(
+    'Incoming',
+    'Outgoing'
+);
+
 CREATE TABLE IF NOT EXISTS Brands (
     brandId SERIAL PRIMARY KEY,
     brandName VARCHAR(255) NOT NULL,
@@ -96,7 +101,7 @@ CREATE TABLE IF NOT EXISTS Brands (
 CREATE TABLE IF NOT EXISTS Models (
     modelId SERIAL PRIMARY KEY,
     brandId INTEGER REFERENCES Brands (brandId) NOT NULL,
-    hourlyCost DECIMAL(10, 2) NOT NULL,
+    hourlyCost DECIMAL(10, 2) NOT NULL CHECK (hourlyCost > 0),
     modelDescription VARCHAR(255)
 );
 
@@ -105,9 +110,9 @@ CREATE TABLE IF NOT EXISTS Cars (
     modelId INTEGER REFERENCES Models (modelId) NOT NULL,
     status CarStatus NOT NULL,
     color CarColor NOT NULL,
-    doorAmount INTEGER NOT NULL,
+    doorAmount INTEGER NOT NULL CHECK (doorAmount > 0),
     productionDate DATE NOT NULL,
-    VIN VARCHAR(17) NOT NULL,
+    VIN VARCHAR(17) NOT NULL UNIQUE CHECK (length(VIN) = 17),
     carEngine DECIMAL(3, 1) NOT NULL,
     horsePower INTEGER NOT NULL,
     bodyType BodyTypes NOT NULL
@@ -115,11 +120,11 @@ CREATE TABLE IF NOT EXISTS Cars (
 
 CREATE TABLE IF NOT EXISTS Users (
     userId SERIAL PRIMARY KEY,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     passwordHash VARCHAR(255) NOT NULL,
     firstName VARCHAR(255) NOT NULL,
     lastName VARCHAR(255) NOT NULL,
-    phone VARCHAR(15) NOT NULL,
+    phone VARCHAR(15) NOT NULL UNIQUE CHECK (phone ~ '^\+?[0-9]{9,15}$'),
     role Roles NOT NULL
 );
 
@@ -128,9 +133,9 @@ CREATE TABLE IF NOT EXISTS Rents (
     userId INTEGER REFERENCES Users (userId) NOT NULL,
     carId INTEGER REFERENCES Cars (carId) NOT NULL,
     startDate timestamp NOT NULL,
-    expectedEndDate timestamp NOT NULL,
-    endDate timestamp,
-    additionalCost DECIMAL(10, 2),
+    expectedEndDate timestamp NOT NULL CHECK (expectedEndDate > startDate),
+    endDate timestamp CHECK (endDate >= startDate OR endDate IS NULL),
+    additionalCost DECIMAL(10, 2) CHECK (additionalCost >= 0),
     status RentStatus NOT NULL
 );
 
@@ -138,7 +143,7 @@ CREATE TABLE IF NOT EXISTS TransactionHistory (
     transactionId SERIAL PRIMARY KEY,
     rentId INTEGER REFERENCES Rents (rentId) NOT NULL,
     status TransactionStatus NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    direction VARCHAR(10),
-    paymentMethod paymentMethods
+    amount DECIMAL(10, 2) NOT NULL CHECK (amount > 0),
+    direction PaymentDirection,
+    paymentMethod PaymentMethods
 );
