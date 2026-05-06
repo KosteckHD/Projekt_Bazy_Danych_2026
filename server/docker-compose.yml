@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres-db:
@@ -11,24 +11,25 @@ services:
       POSTGRES_DB: rental_db
     ports:
       - "5432:5432"
-    volumes:
-      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    volumes: # 0X - oznaczenie kolejności
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./db/views.sql:/docker-entrypoint-initdb.d/02_views.sql
       - postgres_data:/var/lib/postgresql/data
 
   backend:
-    build: 
-      context: .     # Dockerfile jest w tym samym folderze co docker-compose
+    build:
+      context: . # Dockerfile jest w tym samym folderze co docker-compose
     container_name: wypozyczalnia-api
     restart: always
     ports:
-      - "3000:3000"         # Wystawiamy port 3000 na zewnątrz (dla Frontendu lub Postmana)
+      - "3000:3000" # Wystawiamy port 3000 na zewnątrz (dla Frontendu lub Postmana)
     environment:
       # WAŻNE: Tutaj wpisujesz port backendowy - jeśli używasz process.env.PORT
       PORT: 3000
       # NAJWAŻNIEJSZE ZMIANY: Zamiast "localhost", serwer musi łączyć się po NAZWIE KONTENERA "postgres-db"
       DATABASE_URL: postgresql://root:mysecretpassword@postgres-db:5432/rental_db
     depends_on:
-      - postgres-db         # Backend musi poczekać, aż baza najpierw wstanie
+      - postgres-db # Backend musi poczekać, aż baza najpierw wstanie
     volumes:
       # To pozwala na edytowanie kodu ("Live Reload" np. przez tsx watch) bez resetowania kontenera!
       - .:/app
