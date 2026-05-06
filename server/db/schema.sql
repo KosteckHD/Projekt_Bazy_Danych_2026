@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS Brands (
 
 CREATE TABLE IF NOT EXISTS Models (
     modelId SERIAL PRIMARY KEY,
+    modelName VARCHAR(255) NOT NULL,
     brandId INTEGER REFERENCES Brands (brandId) NOT NULL,
     hourlyCost DECIMAL(10, 2) NOT NULL CHECK (hourlyCost > 0),
     modelDescription VARCHAR(255)
