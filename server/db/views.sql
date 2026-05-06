@@ -39,3 +39,15 @@ JOIN Users u ON r.userId = u.userId
 JOIN Cars c ON r.carId = c.carId
 JOIN Models m ON c.modelId = m.modelId
 JOIN Brands b ON m.brandId = b.brandId;
+
+CREATE OR REPLACE VIEW vw_most_popular_cars AS
+SELECT
+    b.brandName,
+    m.modelName,
+    COUNT(r.rentId) AS rental_count
+FROM Rents r
+JOIN Cars c ON r.carId = c.carId
+JOIN Models m ON c.modelId = m.modelId
+JOIN Brands b ON m.brandId = b.brandId
+GROUP BY b.brandName, m.modelName
+ORDER BY rental_count DESC;

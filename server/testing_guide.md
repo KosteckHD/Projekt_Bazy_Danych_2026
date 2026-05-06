@@ -49,6 +49,9 @@ SELECT * FROM vw_current_rentals_by_user;
 
 -- Sprawdzenie wszystkich wypożyczeń
 SELECT * FROM vw_all_rentals_by_user;
+
+-- Sprawdzenie najpopularniejszych samochodów
+SELECT * FROM vw_most_popular_cars;
 ```
 
 ## 5. Wyjście z konsoli psql
