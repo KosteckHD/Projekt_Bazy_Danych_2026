@@ -1,16 +1,20 @@
-import express, { type Request, type Response } from 'express';
 import dotenv from 'dotenv';
-
+import { createApp } from './api/app.js';
+import { pool } from './config/db.js';
 
 dotenv.config();
 
-const app=express();
+const app = createApp();
+const port = Number(process.env.PORT ?? 3000);
 
-app.use(express.json());
-
-app.get('/',(req:Request, res:Response)=>{
-    res.send("BACKEND WORKS :P")
+app.listen(port, () => {
+  console.log(`Server is working on port ${port}`);
 });
 
-const PORT=process.env.PORT
-app.listen(PORT,()=>console.log(`Sever is working on port ${PORT}`))
+process.on('SIGINT', () => {
+  void pool.end().finally(() => process.exit(0));
+});
+
+process.on('SIGTERM', () => {
+  void pool.end().finally(() => process.exit(0));
+});
