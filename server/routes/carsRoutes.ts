@@ -49,7 +49,7 @@ const carCreateWithBrandModelSchema = z.object({
 
 const carCreateSchema = z.union([carCreateWithModelIdSchema, carCreateWithBrandModelSchema]);
 
-const carUpdateSchema = carCreateSchema
+const carUpdateSchema = carCreateWithModelIdSchema
   .partial()
   .extend({
     isActive: z.coerce.boolean().optional(),
