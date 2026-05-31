@@ -1,0 +1,297 @@
+.rent-container {
+  width: 100%;
+  margin-top: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.rent-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.rent-badge {
+  background: rgba(6, 182, 212, 0.1);
+  color: #22d3ee;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  padding: 0.4rem 1rem;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  display: inline-block;
+}
+
+.rent-header h2 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  letter-spacing: -0.03em;
+}
+
+.rent-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  max-width: 680px;
+  line-height: 1.6;
+}
+
+/* FILTER BAR */
+.filter-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  padding: 1.75rem;
+  margin-bottom: 2.5rem;
+  border-radius: 16px;
+  text-align: left;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.filter-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.filter-group input[type="text"],
+.filter-group select {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.filter-group input[type="text"]:focus,
+.filter-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.filter-group select option {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+.price-slider {
+  justify-content: space-between;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price-val {
+  font-weight: 700;
+  color: var(--secondary);
+  font-size: 0.9rem;
+}
+
+.filter-group input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  outline: none;
+}
+
+.filter-group input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  box-shadow: 0 0 8px var(--primary-glow);
+  transition: transform 0.1s ease;
+}
+
+.filter-group input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.slider-minmax {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* CAR RENT GRID */
+.rent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.empty-state-rent {
+  grid-column: 1 / -1;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  border-radius: 16px;
+}
+
+.rent-card {
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 16px;
+  min-height: 280px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: left;
+}
+
+.rent-card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.4),
+    0 0 15px var(--primary-glow);
+  border-color: var(--primary);
+}
+
+.rent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rent-card-brand {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--secondary);
+}
+
+.rent-card-country {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.rent-card-model {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+.rent-card-specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+  font-size: 0.875rem;
+}
+
+.spec-rent-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.spec-rent-icon {
+  font-size: 1.1rem;
+}
+
+.rent-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1.25rem;
+  margin-top: auto;
+}
+
+.rent-card-price {
+  display: flex;
+  flex-direction: column;
+}
+
+.rent-price-num {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.rent-price-unit {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.rent-now-btn {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: #fff;
+  border: none;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.rent-now-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--primary-glow);
+}
+
+.rent-now-btn:active {
+  transform: translateY(0);
+}
+
+.rent-offline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  max-width: 600px;
+  margin: 2rem auto;
+}
+
+@media (max-width: 992px) {
+  .filter-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
+}

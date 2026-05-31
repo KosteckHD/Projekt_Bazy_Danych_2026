@@ -32,8 +32,8 @@ services:
       - postgres-db # Backend musi poczekać, aż baza najpierw wstanie
     volumes:
       # To pozwala na edytowanie kodu ("Live Reload" np. przez tsx watch) bez resetowania kontenera!
-      - .:/app
-      - /app/node_modules
+      - .:/server
+      - /server/node_modules
 
 volumes:
   postgres_data:
