@@ -11,9 +11,7 @@ export async function listBrands() {
   return query(`
     SELECT
       b.brandId AS "brandId",
-      b.brandId AS "brandid",
       b.brandName AS "brandName",
-      b.brandName AS "brandname",
       b.country,
       COUNT(DISTINCT m.modelId)::int AS "modelCount",
       COUNT(DISTINCT c.carId)::int AS "carCount",

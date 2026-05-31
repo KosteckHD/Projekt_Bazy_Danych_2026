@@ -1,4 +1,4 @@
-import { query, queryOne, withTransaction } from '../config/db.js';
+import { query, queryOne, withTransaction, toDualCase } from '../config/db.js';
 import { addFilter, buildUpdateSet } from '../config/sql.js';
 import { conflict, notFound } from '../handlers/httpError.js';
 
@@ -38,44 +38,26 @@ export type CarFilters = {
 const carSelect = `
   SELECT
     c.carId AS "carId",
-    c.carId AS "carid",
     c.modelId AS "modelId",
-    c.modelId AS "modelid",
     m.modelName AS "modelName",
-    m.modelName AS "modelname",
     m.hourlyCost::float AS "hourlyCost",
-    m.hourlyCost::float AS "hourlycost",
     b.brandId AS "brandId",
-    b.brandId AS "brandid",
     b.brandName AS "brandName",
-    b.brandName AS "brandname",
     c.branchId AS "branchId",
-    c.branchId AS "branchid",
     br.branchName AS "branchName",
-    br.branchName AS "branchname",
     c.status,
     c.color,
     c.doorAmount AS "doorAmount",
-    c.doorAmount AS "dooramount",
     c.productionDate AS "productionDate",
-    c.productionDate AS "productiondate",
     c.VIN AS "VIN",
-    c.VIN AS "vin",
     c.registrationNumber AS "registrationNumber",
-    c.registrationNumber AS "registrationnumber",
     c.mileage,
     c.carEngine::float AS "carEngine",
-    c.carEngine::float AS "carengine",
     c.horsePower AS "horsePower",
-    c.horsePower AS "horsepower",
     c.bodyType AS "bodyType",
-    c.bodyType AS "bodytype",
     c.isActive AS "isActive",
-    c.isActive AS "isactive",
     c.createdAt AS "createdAt",
-    c.createdAt AS "createdat",
-    c.updatedAt AS "updatedAt",
-    c.updatedAt AS "updatedat"
+    c.updatedAt AS "updatedAt"
   FROM Cars c
   JOIN Models m ON m.modelId = c.modelId
   JOIN Brands b ON b.brandId = m.brandId
@@ -237,7 +219,7 @@ export async function createCar(input: CarInput) {
         ]
       );
 
-      return carInsert.rows[0];
+      return toDualCase(carInsert.rows[0]);
     });
   }
 

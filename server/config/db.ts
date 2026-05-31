@@ -11,12 +11,24 @@ export const pool = new Pool({
     'postgresql://root:mysecretpassword@localhost:5432/rental_db',
 });
 
+export function toDualCase<T>(row: T): T {
+  if (!row || typeof row !== 'object') return row;
+  const result = { ...row } as any;
+  for (const key of Object.keys(row as any)) {
+    const lower = key.toLowerCase();
+    if (lower !== key && !(lower in result)) {
+      result[lower] = (row as any)[key];
+    }
+  }
+  return result;
+}
+
 export async function query<T extends pg.QueryResultRow>(
   text: string,
   params: unknown[] = [],
 ): Promise<T[]> {
   const result = await pool.query<T>(text, params);
-  return result.rows;
+  return result.rows.map(toDualCase);
 }
 
 export async function queryOne<T extends pg.QueryResultRow>(
