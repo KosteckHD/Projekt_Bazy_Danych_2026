@@ -9,7 +9,7 @@ interface RentProps {
 
 export const Rent: React.FC<RentProps> = ({ cars, isOnline }) => {
   // Filters State
-  const [maxPrice, setMaxPrice] = useState<number>(200);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [engineType, setEngineType] = useState<
     "all" | "combustion" | "electric"
   >("all");
@@ -26,10 +26,7 @@ export const Rent: React.FC<RentProps> = ({ cars, isOnline }) => {
     return Math.max(...availableCars.map((c) => Number(c.hourlycost)), 100);
   }, [availableCars]);
 
-  // Sync state maxPrice if absoluteMaxPrice changes
-  React.useEffect(() => {
-    setMaxPrice(absoluteMaxPrice);
-  }, [absoluteMaxPrice]);
+  const currentMaxPrice = maxPrice !== null ? maxPrice : absoluteMaxPrice;
 
   // Get unique body types for filtering dropdown
   const uniqueBodyTypes = useMemo(() => {
@@ -46,7 +43,7 @@ export const Rent: React.FC<RentProps> = ({ cars, isOnline }) => {
         car.brandname.toLowerCase().includes(searchQuery.toLowerCase()) ||
         car.modelname.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesPrice = cost <= maxPrice;
+      const matchesPrice = cost <= currentMaxPrice;
 
       const matchesEngine =
         engineType === "all" ||
@@ -57,7 +54,7 @@ export const Rent: React.FC<RentProps> = ({ cars, isOnline }) => {
 
       return matchesSearch && matchesPrice && matchesEngine && matchesBody;
     });
-  }, [availableCars, searchQuery, maxPrice, engineType, bodyType]);
+  }, [availableCars, searchQuery, currentMaxPrice, engineType, bodyType]);
 
   const handleRentClick = (car: Car) => {
     alert(
@@ -115,14 +112,14 @@ export const Rent: React.FC<RentProps> = ({ cars, isOnline }) => {
         <div className="filter-group price-slider">
           <div className="slider-label">
             <label htmlFor="price">Cena do: </label>
-            <span className="price-val">{maxPrice} PLN/h</span>
+            <span className="price-val">{currentMaxPrice} PLN/h</span>
           </div>
           <input
             type="range"
             id="price"
             min="10"
             max={absoluteMaxPrice}
-            value={maxPrice}
+            value={currentMaxPrice}
             onChange={(e) => setMaxPrice(Number(e.target.value))}
           />
           <div className="slider-minmax">
