@@ -27,7 +27,7 @@ export async function fetchCars(): Promise<Car[]> {
 }
 
 export async function fetchPopularStats(): Promise<PopularCarStat[]> {
-  const res = await fetch(`${API_BASE_URL}/api/stats/popular`);
+  const res = await fetch(`${API_BASE_URL}/api/reports/popular-cars`);
   if (!res.ok) {
     throw new Error(`Failed to fetch popular stats: ${res.statusText}`);
   }
