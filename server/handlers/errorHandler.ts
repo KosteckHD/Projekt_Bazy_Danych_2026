@@ -32,9 +32,29 @@ export function errorHandler(
 
   const pgError = error as PgError;
   if (pgError.code === '23505') {
+    if (pgError.constraint?.toLowerCase().includes('vin') || pgError.detail?.toLowerCase().includes('vin')) {
+      res.status(409).json({
+        message: 'Samochód o podanym numerze VIN jest już zarejestrowany w bazie.',
+      });
+      return;
+    }
     res.status(409).json({
       message: 'Unique constraint violation',
       details: pgError.detail,
+    });
+    return;
+  }
+
+  if (pgError.code === '23514') {
+    if (pgError.constraint?.toLowerCase().includes('vin') || pgError.detail?.toLowerCase().includes('vin')) {
+      res.status(400).json({
+        message: 'Podany numer VIN ma nieprawidłowy format (powinien składać się z 17 znaków alfanumerycznych i nie zawierać liter I, O, Q).',
+      });
+      return;
+    }
+    res.status(400).json({
+      message: 'Check constraint violation',
+      details: pgError.constraint,
     });
     return;
   }
