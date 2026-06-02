@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import "./App.css";
 import { Navbar } from "./components/Navbar/Navbar";
 import { Hero } from "./components/Hero/Hero";
 import { Dashboard } from "./components/Dashboard/Dashboard";
@@ -64,7 +63,10 @@ function App() {
         setStats([]);
       }
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Wystąpił nieznany błąd podczas pobierania danych.";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Wystąpił nieznany błąd podczas pobierania danych.";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -72,20 +74,14 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAllData();
   }, [loadAllData]);
 
   const isOnline = health?.status === "OK";
 
   return (
-    <div className="app-container">
-      {/* Background neon glows */}
-      <div className="bg-glow-container" aria-hidden="true">
-        <div className="glow-primary"></div>
-        <div className="glow-secondary"></div>
-      </div>
-
+    <div className="min-h-screen bg-background text-on-surface font-body-md flex flex-col justify-between pt-20">
+      {/* Top Navigation */}
       <Navbar
         health={health}
         loading={loading}
@@ -94,30 +90,19 @@ function App() {
         onNavigate={navigate}
       />
 
-      <main className="main-content">
+      {/* Main Content Area */}
+      <main className="flex-grow pt-6 pb-12">
         {error && (
-          <div
-            className="glass-panel animate-fade-in"
-            style={{
-              padding: "1.5rem",
-              borderColor: "var(--danger)",
-              background: "rgba(239, 68, 68, 0.05)",
-              borderRadius: "12px",
-              color: "#f87171",
-              textAlign: "left",
-            }}
-          >
-            <h4
-              style={{
-                margin: "0 0 0.5rem 0",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
-            >
-              ⚠️ Błąd synchronizacji
-            </h4>
-            <p style={{ margin: 0, fontSize: "0.9rem" }}>{error}</p>
+          <div className="max-w-container-max mx-auto px-margin-desktop mb-6">
+            <div className="bg-error-container/20 border border-error-container text-on-error-container p-4 rounded-xl text-sm flex items-center gap-3">
+              <span className="material-symbols-outlined text-error">
+                warning
+              </span>
+              <div>
+                <h4 className="font-semibold">Błąd synchronizacji</h4>
+                <p className="text-xs opacity-90">{error}</p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -140,6 +125,90 @@ function App() {
           />
         )}
       </main>
+
+      {/* Cozy Footer */}
+      <footer className="bg-secondary text-on-secondary w-full">
+        <div className="w-full py-stack-lg px-margin-desktop max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-start gap-gutter">
+          <div className="max-w-sm space-y-4">
+            <h2 className="font-headline-sm text-2xl text-on-secondary font-bold">
+              Harvest Motion
+            </h2>
+            <p className="font-body-sm text-sm text-on-secondary/80 leading-relaxed">
+              Przekształcamy wynajem samochodów w gościnne doświadczenie. Poczuj
+              ciepło domu na każdej drodze, którą wybierzesz tej jesieni.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-12">
+            <div className="flex flex-col gap-3">
+              <h4 className="font-headline-sm text-base text-on-secondary mb-2 font-semibold">
+                Wynajem
+              </h4>
+              <button
+                onClick={() => navigate("/rent")}
+                className="font-body-sm text-left text-sm text-on-secondary/80 hover:text-on-secondary hover:underline transition-all"
+              >
+                Wszystkie auta
+              </button>
+              <a
+                className="font-body-sm text-sm text-on-secondary/80 hover:text-on-secondary hover:underline transition-all"
+                href="#"
+              >
+                Lokalizacje
+              </a>
+              <a
+                className="font-body-sm text-sm text-on-secondary/80 hover:text-on-secondary hover:underline transition-all"
+                href="#"
+              >
+                Oferty specjalne
+              </a>
+            </div>
+            <div className="flex flex-col gap-3">
+              <h4 className="font-headline-sm text-base text-on-secondary mb-2 font-semibold">
+                Informacje
+              </h4>
+              <a
+                className="font-body-sm text-sm text-on-secondary/80 hover:text-on-secondary hover:underline transition-all"
+                href="#"
+              >
+                Regulamin
+              </a>
+              <a
+                className="font-body-sm text-sm text-on-secondary/80 hover:text-on-secondary hover:underline transition-all"
+                href="#"
+              >
+                Polityka Privaćności
+              </a>
+              <a
+                className="font-body-sm text-sm text-on-secondary/80 hover:text-on-secondary hover:underline transition-all"
+                href="#"
+              >
+                Kontakt
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 w-full py-6 px-margin-desktop">
+          <div className="max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="font-body-sm text-xs text-on-secondary/60">
+              © 2024 Harvest Motion Hospitality Rentals. Wszystkie prawa
+              zastrzeżone.
+            </p>
+            <div className="flex gap-6 text-on-secondary/60">
+              <span className="material-symbols-outlined cursor-pointer hover:text-on-secondary transition-colors">
+                social_leaderboard
+              </span>
+              <span className="material-symbols-outlined cursor-pointer hover:text-on-secondary transition-colors">
+                photo_camera
+              </span>
+              <span className="material-symbols-outlined cursor-pointer hover:text-on-secondary transition-colors">
+                mail
+              </span>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
