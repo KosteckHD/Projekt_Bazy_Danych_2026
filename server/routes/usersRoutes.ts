@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as usersController from '../controllers/usersController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles, requireSelfOrRoles } from '../middleware/auth.js';
 import { idParamSchema, roles, validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -38,29 +39,37 @@ const passwordSchema = z.object({
   password: z.string().min(8).max(255),
 });
 
-router.get('/', asyncHandler(usersController.listUsers));
-router.get('/:id', validate({ params: idParamSchema }), asyncHandler(usersController.getUser));
+router.get('/', authenticate, requireRoles('Manager', 'Admin'), asyncHandler(usersController.listUsers));
+router.get('/:id', authenticate, requireSelfOrRoles('id', 'Manager', 'Admin'), validate({ params: idParamSchema }), asyncHandler(usersController.getUser));
 router.get(
   '/:id/rents',
+  authenticate,
+  requireSelfOrRoles('id', 'Worker', 'Manager', 'Admin'),
   validate({ params: idParamSchema }),
   asyncHandler(usersController.listUserRents),
 );
-router.post('/', validate({ body: userCreateSchema }), asyncHandler(usersController.createUser));
+router.post('/', authenticate, requireRoles('Admin'), validate({ body: userCreateSchema }), asyncHandler(usersController.createUser));
 router.patch(
   '/:id',
+  authenticate,
+  requireSelfOrRoles('id', 'Admin'),
   validate({ params: idParamSchema, body: userUpdateSchema }),
   asyncHandler(usersController.updateUser),
 );
 router.patch(
   '/:id/role',
+  authenticate,
+  requireRoles('Admin'),
   validate({ params: idParamSchema, body: roleSchema }),
   asyncHandler(usersController.updateUserRole),
 );
 router.patch(
   '/:id/password',
+  authenticate,
+  requireSelfOrRoles('id', 'Admin'),
   validate({ params: idParamSchema, body: passwordSchema }),
   asyncHandler(usersController.updatePassword),
 );
-router.delete('/:id', validate({ params: idParamSchema }), asyncHandler(usersController.deleteUser));
+router.delete('/:id', authenticate, requireRoles('Admin'), validate({ params: idParamSchema }), asyncHandler(usersController.deleteUser));
 
 export default router;

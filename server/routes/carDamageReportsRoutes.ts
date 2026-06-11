@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as carDamageReportsController from '../controllers/carDamageReportsController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
 import { idParamSchema, moneySchema, validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -20,6 +21,8 @@ const damageUpdateSchema = z
     isResolved: z.coerce.boolean().optional(),
   })
   .refine((value) => Object.keys(value).length > 0, 'Provide at least one field to update');
+
+router.use(authenticate, requireRoles('Worker', 'Manager', 'Admin'));
 
 router.get('/', asyncHandler(carDamageReportsController.listDamages));
 router.post(

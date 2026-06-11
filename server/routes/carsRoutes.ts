@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as carsController from '../controllers/carsController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
 import {
   bodyTypes,
   carColors,
@@ -58,7 +59,6 @@ const carUpdateSchema = carCreateWithModelIdSchema
 
 const statusSchema = z.object({
   status: z.enum(carStatuses),
-  operatorId: z.coerce.number().int().positive(),
 });
 
 const carQuerySchema = z.object({
@@ -81,17 +81,21 @@ router.get(
   validate({ params: idParamSchema }),
   asyncHandler(carsController.listCarRents),
 );
-router.post('/', validate({ body: carCreateSchema }), asyncHandler(carsController.createCar));
+router.post('/', authenticate, requireRoles('Manager', 'Admin'), validate({ body: carCreateSchema }), asyncHandler(carsController.createCar));
 router.patch(
   '/:id',
+  authenticate,
+  requireRoles('Manager', 'Admin'),
   validate({ params: idParamSchema, body: carUpdateSchema }),
   asyncHandler(carsController.updateCar),
 );
 router.patch(
   '/:id/status',
+  authenticate,
+  requireRoles('Worker', 'Manager', 'Admin'),
   validate({ params: idParamSchema, body: statusSchema }),
   asyncHandler(carsController.updateCarStatus),
 );
-router.delete('/:id', validate({ params: idParamSchema }), asyncHandler(carsController.deleteCar));
+router.delete('/:id', authenticate, requireRoles('Manager', 'Admin'), validate({ params: idParamSchema }), asyncHandler(carsController.deleteCar));
 
 export default router;

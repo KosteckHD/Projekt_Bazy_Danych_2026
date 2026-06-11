@@ -3,7 +3,7 @@ import { badRequest, conflict, notFound } from '../handlers/httpError.js';
 import { ensureBranchStaff } from './branchStaffService.js';
 
 export type RentInput = {
-  userId: number;
+  userId?: number;
   carId: number;
   workerId?: number | null;
   pickupBranchId?: number | null;
@@ -172,6 +172,10 @@ function calculateTotalCost(startDate: Date, endDate: Date, hourlyCost: number, 
 }
 
 export async function createRent(input: RentInput) {
+  if (!input.userId) {
+    badRequest('userId is required');
+  }
+
   await ensureUserCanRent(input.userId);
   const car = await queryOne<{ branchid: number | null }>(
     'SELECT branchId FROM Cars WHERE carId = $1',

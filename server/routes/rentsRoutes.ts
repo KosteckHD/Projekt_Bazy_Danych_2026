@@ -2,12 +2,13 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as rentsController from '../controllers/rentsController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
 import { dateTimeSchema, idParamSchema, moneySchema, paymentMethods, validate } from '../middleware/validate.js';
 
 const router = Router();
 
 const rentCreateSchema = z.object({
-  userId: z.coerce.number().int().positive(),
+  userId: z.coerce.number().int().positive().optional(),
   carId: z.coerce.number().int().positive(),
   workerId: z.coerce.number().int().positive().optional().nullable(),
   pickupBranchId: z.coerce.number().int().positive().optional().nullable(),
@@ -34,12 +35,10 @@ const availabilitySchema = z.object({
 });
 
 const startRentSchema = z.object({
-  workerId: z.coerce.number().int().positive(),
   startDate: dateTimeSchema.optional(),
 });
 
 const finishRentSchema = z.object({
-  staffId: z.coerce.number().int().positive(),
   endDate: dateTimeSchema.optional(),
   additionalCost: moneySchema.optional(),
   lateFee: moneySchema.optional(),
@@ -53,42 +52,49 @@ const finishRentSchema = z.object({
 });
 
 const cancelNoShowSchema = z.object({
-  staffId: z.coerce.number().int().positive(),
   cancellationFee: moneySchema.default(0),
   paymentMethod: z.enum(paymentMethods).optional(),
 });
 
-router.get('/', asyncHandler(rentsController.listRents));
-router.get('/current', asyncHandler(rentsController.listCurrentRents));
-router.get('/pending', asyncHandler(rentsController.listPendingRents));
-router.get('/overdue', asyncHandler(rentsController.listOverdueRents));
+router.get('/', authenticate, requireRoles('Worker', 'Manager', 'Admin'), asyncHandler(rentsController.listRents));
+router.get('/current', authenticate, requireRoles('Worker', 'Manager', 'Admin'), asyncHandler(rentsController.listCurrentRents));
+router.get('/pending', authenticate, requireRoles('Worker', 'Manager', 'Admin'), asyncHandler(rentsController.listPendingRents));
+router.get('/overdue', authenticate, requireRoles('Worker', 'Manager', 'Admin'), asyncHandler(rentsController.listOverdueRents));
 router.get(
   '/availability',
   validate({ query: availabilitySchema }),
   asyncHandler(rentsController.checkAvailability),
 );
-router.get('/:id', validate({ params: idParamSchema }), asyncHandler(rentsController.getRent));
-router.post('/', validate({ body: rentCreateSchema }), asyncHandler(rentsController.createRent));
+router.get('/:id', authenticate, requireRoles('Worker', 'Manager', 'Admin'), validate({ params: idParamSchema }), asyncHandler(rentsController.getRent));
+router.post('/', authenticate, requireRoles('Customer', 'Worker', 'Manager', 'Admin'), validate({ body: rentCreateSchema }), asyncHandler(rentsController.createRent));
 router.patch(
   '/:id',
+  authenticate,
+  requireRoles('Worker', 'Manager', 'Admin'),
   validate({ params: idParamSchema, body: rentUpdateSchema }),
   asyncHandler(rentsController.updateRent),
 );
 router.post(
   '/:id/start',
+  authenticate,
+  requireRoles('Worker', 'Manager', 'Admin'),
   validate({ params: idParamSchema, body: startRentSchema }),
   asyncHandler(rentsController.startRent),
 );
 router.post(
   '/:id/finish',
+  authenticate,
+  requireRoles('Worker', 'Manager', 'Admin'),
   validate({ params: idParamSchema, body: finishRentSchema }),
   asyncHandler(rentsController.finishRent),
 );
 router.post(
   '/:id/cancel-no-show',
+  authenticate,
+  requireRoles('Worker', 'Manager', 'Admin'),
   validate({ params: idParamSchema, body: cancelNoShowSchema }),
   asyncHandler(rentsController.cancelNoShowRent),
 );
-router.delete('/:id', validate({ params: idParamSchema }), asyncHandler(rentsController.deleteRent));
+router.delete('/:id', authenticate, requireRoles('Worker', 'Manager', 'Admin'), validate({ params: idParamSchema }), asyncHandler(rentsController.deleteRent));
 
 export default router;

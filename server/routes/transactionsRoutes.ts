@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as transactionsController from '../controllers/transactionsController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
 import {
   idParamSchema,
   paymentDirections,
@@ -35,6 +36,8 @@ const statusSchema = z.object({
   status: z.enum(transactionStatuses),
   paymentMethod: z.enum(paymentMethods).optional(),
 });
+
+router.use(authenticate, requireRoles('Worker', 'Manager', 'Admin'));
 
 router.get('/', asyncHandler(transactionsController.listTransactions));
 router.get(

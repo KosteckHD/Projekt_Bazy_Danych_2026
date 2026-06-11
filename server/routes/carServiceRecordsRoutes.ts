@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as carServiceRecordsController from '../controllers/carServiceRecordsController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
 import { idParamSchema, moneySchema, validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -18,6 +19,8 @@ const serviceUpdateSchema = serviceCreateSchema
   .omit({ carId: true })
   .partial()
   .refine((value) => Object.keys(value).length > 0, 'Provide at least one field to update');
+
+router.use(authenticate, requireRoles('Worker', 'Manager', 'Admin'));
 
 router.get('/', asyncHandler(carServiceRecordsController.listServices));
 router.get(

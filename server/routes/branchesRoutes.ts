@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as branchesController from '../controllers/branchesController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
 import { idParamSchema, validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -26,14 +27,18 @@ router.get(
   validate({ params: idParamSchema }),
   asyncHandler(branchesController.listBranchCars),
 );
-router.post('/', validate({ body: branchCreateSchema }), asyncHandler(branchesController.createBranch));
+router.post('/', authenticate, requireRoles('Admin'), validate({ body: branchCreateSchema }), asyncHandler(branchesController.createBranch));
 router.patch(
   '/:id',
+  authenticate,
+  requireRoles('Admin', 'Manager'),
   validate({ params: idParamSchema, body: branchUpdateSchema }),
   asyncHandler(branchesController.updateBranch),
 );
 router.delete(
   '/:id',
+  authenticate,
+  requireRoles('Admin'),
   validate({ params: idParamSchema }),
   asyncHandler(branchesController.deleteBranch),
 );

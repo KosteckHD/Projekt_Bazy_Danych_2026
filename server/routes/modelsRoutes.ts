@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as modelsController from '../controllers/modelsController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
 import {
   brandIdParamSchema,
   idParamSchema,
@@ -30,14 +31,18 @@ router.get(
   asyncHandler(modelsController.listModelsByBrand),
 );
 router.get('/:id', validate({ params: idParamSchema }), asyncHandler(modelsController.getModel));
-router.post('/', validate({ body: modelCreateSchema }), asyncHandler(modelsController.createModel));
+router.post('/', authenticate, requireRoles('Manager', 'Admin'), validate({ body: modelCreateSchema }), asyncHandler(modelsController.createModel));
 router.patch(
   '/:id',
+  authenticate,
+  requireRoles('Manager', 'Admin'),
   validate({ params: idParamSchema, body: modelUpdateSchema }),
   asyncHandler(modelsController.updateModel),
 );
 router.delete(
   '/:id',
+  authenticate,
+  requireRoles('Manager', 'Admin'),
   validate({ params: idParamSchema }),
   asyncHandler(modelsController.deleteModel),
 );

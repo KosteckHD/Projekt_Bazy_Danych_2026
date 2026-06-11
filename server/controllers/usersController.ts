@@ -19,7 +19,15 @@ export async function createUser(req: Request, res: Response) {
 }
 
 export async function updateUser(req: Request, res: Response) {
-  res.json(await usersService.updateUser(Number(req.params.id), req.body));
+  const input = { ...req.body };
+
+  if (req.user?.role !== 'Admin') {
+    delete input.role;
+    delete input.branchId;
+    delete input.isActive;
+  }
+
+  res.json(await usersService.updateUser(Number(req.params.id), input));
 }
 
 export async function updateUserRole(req: Request, res: Response) {

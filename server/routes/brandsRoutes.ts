@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import * as brandsController from '../controllers/brandsController.js';
 import { asyncHandler } from '../handlers/asyncHandler.js';
+import { authenticate, requireRoles } from '../middleware/auth.js';
 import { countries, idParamSchema, validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -23,14 +24,18 @@ router.get(
   asyncHandler(brandsController.listBrandModels),
 );
 router.get('/:id', validate({ params: idParamSchema }), asyncHandler(brandsController.getBrand));
-router.post('/', validate({ body: brandCreateSchema }), asyncHandler(brandsController.createBrand));
+router.post('/', authenticate, requireRoles('Manager', 'Admin'), validate({ body: brandCreateSchema }), asyncHandler(brandsController.createBrand));
 router.patch(
   '/:id',
+  authenticate,
+  requireRoles('Manager', 'Admin'),
   validate({ params: idParamSchema, body: brandUpdateSchema }),
   asyncHandler(brandsController.updateBrand),
 );
 router.delete(
   '/:id',
+  authenticate,
+  requireRoles('Manager', 'Admin'),
   validate({ params: idParamSchema }),
   asyncHandler(brandsController.deleteBrand),
 );

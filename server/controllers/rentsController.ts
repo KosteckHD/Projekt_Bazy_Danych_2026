@@ -33,7 +33,10 @@ export async function getRent(req: Request, res: Response) {
 }
 
 export async function createRent(req: Request, res: Response) {
-  const rent = await rentsService.createRent(req.body);
+  const rent = await rentsService.createRent({
+    ...req.body,
+    userId: req.user?.role === 'Customer' ? req.user.userId : req.body.userId,
+  });
   res.status(201).json(rent);
 }
 
@@ -45,18 +48,18 @@ export async function startRent(req: Request, res: Response) {
   res.json(
     await rentsService.startRent(
       Number(req.params.id),
-      req.body.workerId,
+      req.user!.userId,
       req.body.startDate,
     ),
   );
 }
 
 export async function finishRent(req: Request, res: Response) {
-  res.json(await rentsService.finishRent(Number(req.params.id), req.body));
+  res.json(await rentsService.finishRent(Number(req.params.id), { ...req.body, staffId: req.user!.userId }));
 }
 
 export async function cancelNoShowRent(req: Request, res: Response) {
-  res.json(await rentsService.cancelNoShowRent(Number(req.params.id), req.body));
+  res.json(await rentsService.cancelNoShowRent(Number(req.params.id), { ...req.body, staffId: req.user!.userId }));
 }
 
 export async function deleteRent(req: Request, res: Response) {

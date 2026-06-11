@@ -21,6 +21,7 @@
     "handlers/**/*.ts",
     "middleware/**/*.ts",
     "routes/**/*.ts",
-    "services/**/*.ts"
+    "services/**/*.ts",
+    "types/**/*.d.ts"
   ]
 }
