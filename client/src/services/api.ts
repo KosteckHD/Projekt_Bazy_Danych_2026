@@ -174,3 +174,26 @@ export async function fetchUsers(): Promise<User[]> {
   }
   return res.json();
 }
+
+export async function fetchPopularCars(): Promise<Car[]> {
+  const res = await fetch(`${API_BASE_URL}/cars/popular`);
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function updateCarStatus(carId: number, status: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/cars/${carId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}

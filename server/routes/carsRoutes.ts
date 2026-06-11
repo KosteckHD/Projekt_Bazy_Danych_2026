@@ -76,6 +76,7 @@ const carQuerySchema = z.object({
 
 router.get('/', validate({ query: carQuerySchema }), asyncHandler(carsController.listCars));
 router.get('/available', asyncHandler(carsController.listAvailableCars));
+router.get('/popular', asyncHandler(carsController.listPopularCars));
 router.get('/:id', validate({ params: idParamSchema }), asyncHandler(carsController.getCar));
 router.get(
   '/:id/rents',

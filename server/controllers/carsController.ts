@@ -9,6 +9,10 @@ export async function listAvailableCars(_req: Request, res: Response) {
   res.json(await carsService.listAvailableCars());
 }
 
+export async function listPopularCars(_req: Request, res: Response) {
+  res.json(await carsService.listPopularCars());
+}
+
 export async function getCar(req: Request, res: Response) {
   res.json(await carsService.getCar(Number(req.params.id)));
 }

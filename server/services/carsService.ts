@@ -94,6 +94,39 @@ export async function listAvailableCars() {
   return query('SELECT * FROM vw_available_cars ORDER BY brandName ASC, modelName ASC');
 }
 
+export async function listPopularCars() {
+  return query(`
+    SELECT 
+      c.carId AS "carId",
+      c.modelId AS "modelId",
+      c.branchId AS "branchId",
+      c.status AS "status",
+      c.color AS "color",
+      c.doorAmount AS "doorAmount",
+      c.productionDate AS "productionDate",
+      c.VIN AS "VIN",
+      c.registrationNumber AS "registrationNumber",
+      c.mileage AS "mileage",
+      c.carEngine AS "carEngine",
+      c.horsePower AS "horsePower",
+      c.bodyType AS "bodyType",
+      c.imageUrl AS "imageUrl",
+      c.isActive AS "isActive",
+      c.createdAt AS "createdAt",
+      c.updatedAt AS "updatedAt",
+      m.modelName AS "modelName",
+      m.hourlyCost AS "hourlyCost",
+      b.brandName AS "brandName",
+      COALESCE(v.rental_count, 0) AS "rentalCount"
+    FROM Cars c
+    JOIN Models m ON m.modelId = c.modelId
+    JOIN Brands b ON b.brandId = m.brandId
+    LEFT JOIN vw_most_popular_cars v ON v.modelId = m.modelId AND v.brandId = b.brandId
+    WHERE c.isActive = TRUE
+    ORDER BY v.rental_count DESC NULLS LAST, c.carId ASC
+  `);
+}
+
 export async function getCar(id: number) {
   const car = await queryOne(`${carSelect} WHERE c.carId = $1`, [id]);
   if (!car) {
