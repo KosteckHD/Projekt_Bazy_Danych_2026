@@ -34,13 +34,15 @@ const availabilitySchema = z.object({
 });
 
 const startRentSchema = z.object({
-  workerId: z.coerce.number().int().positive().optional().nullable(),
+  workerId: z.coerce.number().int().positive(),
   startDate: dateTimeSchema.optional(),
 });
 
 const finishRentSchema = z.object({
+  staffId: z.coerce.number().int().positive(),
   endDate: dateTimeSchema.optional(),
   additionalCost: moneySchema.optional(),
+  lateFee: moneySchema.optional(),
   returnBranchId: z.coerce.number().int().positive().optional().nullable(),
   mileage: z.coerce.number().int().nonnegative().optional(),
   carStatus: z.enum(['Available', 'Maintenance', 'Damaged']).default('Available'),
@@ -48,6 +50,12 @@ const finishRentSchema = z.object({
   createPayment: z.coerce.boolean().default(true),
   damageDescription: z.string().trim().min(1).optional(),
   damageRepairCost: moneySchema.default(0),
+});
+
+const cancelNoShowSchema = z.object({
+  staffId: z.coerce.number().int().positive(),
+  cancellationFee: moneySchema.default(0),
+  paymentMethod: z.enum(paymentMethods).optional(),
 });
 
 router.get('/', asyncHandler(rentsController.listRents));
@@ -75,6 +83,11 @@ router.post(
   '/:id/finish',
   validate({ params: idParamSchema, body: finishRentSchema }),
   asyncHandler(rentsController.finishRent),
+);
+router.post(
+  '/:id/cancel-no-show',
+  validate({ params: idParamSchema, body: cancelNoShowSchema }),
+  asyncHandler(rentsController.cancelNoShowRent),
 );
 router.delete('/:id', validate({ params: idParamSchema }), asyncHandler(rentsController.deleteRent));
 

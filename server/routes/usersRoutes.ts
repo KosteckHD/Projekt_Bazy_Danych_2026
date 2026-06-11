@@ -15,6 +15,7 @@ export const userCreateSchema = z.object({
   lastName: z.string().trim().min(1).max(255),
   phone: z.string().trim().regex(/^\+?[0-9]{9,15}$/),
   role: z.enum(roles).default('Customer'),
+  branchId: z.coerce.number().int().positive().optional().nullable(),
   driverLicenseNumber: z.string().trim().max(64).optional().nullable(),
   driverLicenseExpiresAt: dateOnlySchema.optional().nullable(),
   birthDate: dateOnlySchema.optional().nullable(),

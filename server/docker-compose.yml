@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_DB: rental_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes: # 0X - oznaczenie kolejności
       - ./db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
       - ./db/views.sql:/docker-entrypoint-initdb.d/02_views.sql

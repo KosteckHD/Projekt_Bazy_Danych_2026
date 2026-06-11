@@ -10,6 +10,7 @@ export type UserInput = {
   lastName: string;
   phone: string;
   role?: string;
+  branchId?: number | null;
   driverLicenseNumber?: string | null;
   driverLicenseExpiresAt?: string | null;
   birthDate?: string | null;
@@ -28,6 +29,7 @@ const userSelect = `
     lastName AS "lastName",
     phone,
     role,
+    branchId AS "branchId",
     driverLicenseNumber AS "driverLicenseNumber",
     driverLicenseExpiresAt AS "driverLicenseExpiresAt",
     birthDate AS "birthDate",
@@ -84,9 +86,9 @@ export async function createUser(input: UserInput) {
     `
       INSERT INTO Users (
         email, passwordHash, firstName, lastName, phone, role,
-        driverLicenseNumber, driverLicenseExpiresAt, birthDate, address
+        branchId, driverLicenseNumber, driverLicenseExpiresAt, birthDate, address
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING
         userId AS "userId",
         email,
@@ -94,6 +96,7 @@ export async function createUser(input: UserInput) {
         lastName AS "lastName",
         phone,
         role,
+        branchId AS "branchId",
         driverLicenseNumber AS "driverLicenseNumber",
         driverLicenseExpiresAt AS "driverLicenseExpiresAt",
         birthDate AS "birthDate",
@@ -109,6 +112,7 @@ export async function createUser(input: UserInput) {
       input.lastName,
       input.phone,
       input.role ?? 'Customer',
+      input.branchId ?? null,
       input.driverLicenseNumber ?? null,
       input.driverLicenseExpiresAt ?? null,
       input.birthDate ?? null,
@@ -127,6 +131,7 @@ export async function updateUser(id: number, input: UserUpdateInput) {
       lastName: 'lastName',
       phone: 'phone',
       role: 'role',
+      branchId: 'branchId',
       driverLicenseNumber: 'driverLicenseNumber',
       driverLicenseExpiresAt: 'driverLicenseExpiresAt',
       birthDate: 'birthDate',
@@ -149,6 +154,7 @@ export async function updateUser(id: number, input: UserUpdateInput) {
         lastName AS "lastName",
         phone,
         role,
+        branchId AS "branchId",
         driverLicenseNumber AS "driverLicenseNumber",
         driverLicenseExpiresAt AS "driverLicenseExpiresAt",
         birthDate AS "birthDate",

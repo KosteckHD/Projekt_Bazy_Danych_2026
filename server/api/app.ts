@@ -34,11 +34,7 @@ export function createApp() {
     res.json({ status: 'ok' });
   });
 
-  app.get('/api/health', (_req, res) => {
-    res.json({ status: 'OK' });
-  });
-
-  app.use('/api', apiRoutes);
+  app.use(apiRoutes);
 
   app.use((_req, _res, next) => {
     next(new HttpError(404, 'Route not found'));

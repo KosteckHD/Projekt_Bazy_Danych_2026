@@ -58,6 +58,7 @@ const carUpdateSchema = carCreateWithModelIdSchema
 
 const statusSchema = z.object({
   status: z.enum(carStatuses),
+  operatorId: z.coerce.number().int().positive(),
 });
 
 const carQuerySchema = z.object({

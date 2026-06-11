@@ -45,7 +45,7 @@ export async function startRent(req: Request, res: Response) {
   res.json(
     await rentsService.startRent(
       Number(req.params.id),
-      req.body.workerId ?? null,
+      req.body.workerId,
       req.body.startDate,
     ),
   );
@@ -53,6 +53,10 @@ export async function startRent(req: Request, res: Response) {
 
 export async function finishRent(req: Request, res: Response) {
   res.json(await rentsService.finishRent(Number(req.params.id), req.body));
+}
+
+export async function cancelNoShowRent(req: Request, res: Response) {
+  res.json(await rentsService.cancelNoShowRent(Number(req.params.id), req.body));
 }
 
 export async function deleteRent(req: Request, res: Response) {

@@ -1,5 +1,6 @@
 import { query, queryOne, withTransaction } from '../config/db.js';
 import { badRequest, conflict, notFound } from '../handlers/httpError.js';
+import { ensureBranchStaff } from './branchStaffService.js';
 
 export type RentInput = {
   userId: number;
@@ -18,8 +19,10 @@ export type RentUpdateInput = Partial<Omit<RentInput, 'userId' | 'carId' | 'stat
 };
 
 export type FinishRentInput = {
+  staffId: number;
   endDate?: string;
   additionalCost?: number;
+  lateFee?: number;
   returnBranchId?: number | null;
   mileage?: number;
   carStatus: 'Available' | 'Maintenance' | 'Damaged';
@@ -27,6 +30,12 @@ export type FinishRentInput = {
   createPayment: boolean;
   damageDescription?: string;
   damageRepairCost: number;
+};
+
+export type CancelNoShowInput = {
+  staffId: number;
+  cancellationFee?: number;
+  paymentMethod?: string;
 };
 
 const rentSelect = `
@@ -164,10 +173,33 @@ function calculateTotalCost(startDate: Date, endDate: Date, hourlyCost: number, 
 
 export async function createRent(input: RentInput) {
   await ensureUserCanRent(input.userId);
+  const car = await queryOne<{ branchid: number | null }>(
+    'SELECT branchId FROM Cars WHERE carId = $1',
+    [input.carId],
+  );
+  if (!car) {
+    notFound('Car not found');
+  }
+
+  const pickupBranchId = input.pickupBranchId ?? car.branchid;
+  if (!pickupBranchId) {
+    conflict('Car must be assigned to a branch before rent can be created');
+  }
+  if (car.branchid !== pickupBranchId) {
+    conflict('Car is not available in selected pickup branch');
+  }
+
   const availability = await checkAvailability(input.carId, input.startDate, input.expectedEndDate);
 
   if (!availability.available) {
     conflict(availability.reason ?? 'Car is not available');
+  }
+
+  if (input.status === 'Started') {
+    if (!input.workerId) {
+      conflict('Worker or manager is required to start rent');
+    }
+    await ensureBranchStaff(input.workerId, pickupBranchId, 'start rent');
   }
 
   return withTransaction(async (client) => {
@@ -197,7 +229,7 @@ export async function createRent(input: RentInput) {
         input.userId,
         input.carId,
         input.workerId ?? null,
-        input.pickupBranchId ?? null,
+        pickupBranchId,
         input.returnBranchId ?? null,
         input.startDate,
         input.expectedEndDate,
@@ -292,18 +324,20 @@ export async function updateRent(id: number, input: RentUpdateInput) {
   );
 }
 
-export async function startRent(id: number, workerId?: number | null, startDateInput?: string) {
+export async function startRent(id: number, workerId: number, startDateInput?: string) {
   return withTransaction(async (client) => {
     const rentResult = await client.query<{
       rentid: number;
       userid: number;
       carid: number;
+      pickupbranchid: number | null;
       startdate: Date;
       expectedenddate: Date;
       status: string;
-    }>('SELECT rentId, userId, carId, startDate, expectedEndDate, status FROM Rents WHERE rentId = $1 FOR UPDATE', [
-      id,
-    ]);
+    }>(
+      'SELECT rentId, userId, carId, pickupBranchId, startDate, expectedEndDate, status FROM Rents WHERE rentId = $1 FOR UPDATE',
+      [id],
+    );
 
     const current = rentResult.rows[0];
     if (!current) {
@@ -314,6 +348,8 @@ export async function startRent(id: number, workerId?: number | null, startDateI
     }
 
     await ensureUserCanRent(current.userid);
+    await ensureBranchStaff(workerId, current.pickupbranchid, 'start rent');
+
     const startDate = startDateInput ?? current.startdate.toISOString();
     const availability = await checkAvailability(
       current.carid,
@@ -336,7 +372,7 @@ export async function startRent(id: number, workerId?: number | null, startDateI
         WHERE rentId = $3
         RETURNING rentId AS "rentId", status, startDate AS "startDate", updatedAt AS "updatedAt"
       `,
-      [workerId ?? null, startDate, id],
+      [workerId, startDate, id],
     );
 
     await client.query('UPDATE Cars SET status = $1, updatedAt = NOW() WHERE carId = $2', [
@@ -353,13 +389,25 @@ export async function finishRent(id: number, input: FinishRentInput) {
     const rentResult = await client.query<{
       rentid: number;
       carid: number;
+      carbranchid: number | null;
+      returnbranchid: number | null;
       startdate: Date;
+      expectedenddate: Date;
       additionalcost: string;
       status: string;
       hourlycost: string;
     }>(
       `
-        SELECT r.rentId, r.carId, r.startDate, r.additionalCost, r.status, m.hourlyCost
+        SELECT
+          r.rentId,
+          r.carId,
+          c.branchId AS carBranchId,
+          r.returnBranchId,
+          r.startDate,
+          r.expectedEndDate,
+          r.additionalCost,
+          r.status,
+          m.hourlyCost
         FROM Rents r
         JOIN Cars c ON c.carId = r.carId
         JOIN Models m ON m.modelId = c.modelId
@@ -378,7 +426,11 @@ export async function finishRent(id: number, input: FinishRentInput) {
     }
 
     const endDate = input.endDate ? new Date(input.endDate) : new Date();
-    const additionalCost = input.additionalCost ?? Number(current.additionalcost);
+    const returnBranchId = input.returnBranchId ?? current.returnbranchid ?? current.carbranchid;
+    await ensureBranchStaff(input.staffId, returnBranchId, 'finish rent');
+
+    const lateFee = endDate > current.expectedenddate ? input.lateFee ?? 0 : 0;
+    const additionalCost = (input.additionalCost ?? Number(current.additionalcost)) + lateFee;
     const cost = calculateTotalCost(current.startdate, endDate, Number(current.hourlycost), additionalCost);
 
     const rentUpdate = await client.query(
@@ -400,7 +452,7 @@ export async function finishRent(id: number, input: FinishRentInput) {
           totalCost::float AS "totalCost",
           status
       `,
-      [endDate.toISOString(), additionalCost, cost.totalCost, input.returnBranchId ?? null, id],
+      [endDate.toISOString(), additionalCost, cost.totalCost, returnBranchId ?? null, id],
     );
 
     await client.query(
@@ -412,7 +464,7 @@ export async function finishRent(id: number, input: FinishRentInput) {
             updatedAt = NOW()
         WHERE carId = $4
       `,
-      [input.carStatus, input.mileage ?? null, input.returnBranchId ?? null, current.carid],
+      [input.carStatus, input.mileage ?? null, returnBranchId ?? null, current.carid],
     );
 
     let payment = null;
@@ -458,11 +510,89 @@ export async function finishRent(id: number, input: FinishRentInput) {
       damageReport = damageResult.rows[0];
     }
 
-    return {
+      return {
       rent: rentUpdate.rows[0],
-      cost,
+      cost: { ...cost, lateFee },
       payment,
       damageReport,
+    };
+  });
+}
+
+export async function cancelNoShowRent(id: number, input: CancelNoShowInput) {
+  return withTransaction(async (client) => {
+    const rentResult = await client.query<{
+      rentid: number;
+      carid: number;
+      pickupbranchid: number | null;
+      status: string;
+    }>('SELECT rentId, carId, pickupBranchId, status FROM Rents WHERE rentId = $1 FOR UPDATE', [id]);
+
+    const current = rentResult.rows[0];
+    if (!current) {
+      notFound('Rent not found');
+    }
+    if (current.status !== 'Pending') {
+      conflict('Only pending rent can be cancelled as no-show');
+    }
+
+    await ensureBranchStaff(input.staffId, current.pickupbranchid, 'cancel no-show rent');
+
+    const rentUpdate = await client.query(
+      `
+        UPDATE Rents
+        SET status = 'Cancelled',
+            workerId = $1,
+            additionalCost = additionalCost + $2,
+            updatedAt = NOW()
+        WHERE rentId = $3
+        RETURNING
+          rentId AS "rentId",
+          carId AS "carId",
+          workerId AS "workerId",
+          additionalCost::float AS "additionalCost",
+          status,
+          updatedAt AS "updatedAt"
+      `,
+      [input.staffId, input.cancellationFee ?? 0, id],
+    );
+
+    await client.query('UPDATE Cars SET status = $1, updatedAt = NOW() WHERE carId = $2', [
+      'Available',
+      current.carid,
+    ]);
+
+    let payment = null;
+    if ((input.cancellationFee ?? 0) > 0) {
+      const paymentResult = await client.query(
+        `
+          INSERT INTO TransactionHistory (
+            rentId, status, transactionType, amount, direction, paymentMethod
+          )
+          VALUES ($1, $2, 'Penalty', $3, 'Incoming', $4)
+          RETURNING
+            transactionId AS "transactionId",
+            rentId AS "rentId",
+            status,
+            transactionType AS "transactionType",
+            amount::float AS "amount",
+            direction,
+            paymentMethod AS "paymentMethod",
+            createdAt AS "createdAt"
+        `,
+        [
+          id,
+          input.paymentMethod ? 'Accepted' : 'Pending',
+          input.cancellationFee,
+          input.paymentMethod ?? null,
+        ],
+      );
+      payment = paymentResult.rows[0];
+    }
+
+    return {
+      rent: rentUpdate.rows[0],
+      payment,
     };
   });
 }

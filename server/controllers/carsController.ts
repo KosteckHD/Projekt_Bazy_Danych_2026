@@ -33,7 +33,7 @@ export async function updateCar(req: Request, res: Response) {
 }
 
 export async function updateCarStatus(req: Request, res: Response) {
-  res.json(await carsService.updateCarStatus(Number(req.params.id), req.body.status));
+  res.json(await carsService.updateCarStatus(Number(req.params.id), req.body.status, req.body.operatorId));
 }
 
 export async function deleteCar(req: Request, res: Response) {

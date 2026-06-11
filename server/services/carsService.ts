@@ -1,6 +1,7 @@
 import { query, queryOne, withTransaction, toDualCase } from '../config/db.js';
 import { addFilter, buildUpdateSet } from '../config/sql.js';
 import { conflict, notFound } from '../handlers/httpError.js';
+import { ensureBranchStaff } from './branchStaffService.js';
 
 export type CarInput = {
   modelId?: number;
@@ -134,13 +135,13 @@ export async function createCar(input: CarInput) {
       );
 
       if (brandCheck.rows.length > 0) {
-        brandId = brandCheck.rows[0].brandid;
+        brandId = brandCheck.rows[0]!.brandid;
       } else {
         const brandInsert = await client.query<{ brandid: number }>(
           'INSERT INTO Brands (brandName, country) VALUES ($1, $2) RETURNING brandId',
           [input.brandName!.trim(), input.country || 'Other']
         );
-        brandId = brandInsert.rows[0].brandid;
+        brandId = brandInsert.rows[0]!.brandid;
       }
 
       // 2. Check or insert model
@@ -151,13 +152,13 @@ export async function createCar(input: CarInput) {
       );
 
       if (modelCheck.rows.length > 0) {
-        modelId = modelCheck.rows[0].modelid;
+        modelId = modelCheck.rows[0]!.modelid;
       } else {
         const modelInsert = await client.query<{ modelid: number }>(
           'INSERT INTO Models (modelName, brandId, hourlyCost, modelDescription) VALUES ($1, $2, $3, $4) RETURNING modelId',
           [input.modelName!.trim(), brandId, Number(input.hourlyCost || 0), input.modelDescription || '']
         );
-        modelId = modelInsert.rows[0].modelid;
+        modelId = modelInsert.rows[0]!.modelid;
       }
 
       // 3. Insert car
@@ -321,7 +322,17 @@ export async function updateCar(id: number, input: Partial<CarInput>) {
   return car;
 }
 
-export async function updateCarStatus(id: number, status: string) {
+export async function updateCarStatus(id: number, status: string, operatorId: number) {
+  const current = await queryOne<{ branchid: number | null }>(
+    'SELECT branchId FROM Cars WHERE carId = $1',
+    [id],
+  );
+  if (!current) {
+    notFound('Car not found');
+  }
+
+  await ensureBranchStaff(operatorId, current.branchid, 'change car status');
+
   const car = await queryOne(
     `
       UPDATE Cars

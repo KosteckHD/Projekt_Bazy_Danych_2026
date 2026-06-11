@@ -79,7 +79,7 @@ function App() {
   const isOnline = health?.status === "OK";
 
   return (
-    <div className="app-container">
+    <div className="app-container animate-fade-in  relative min-h-screen flex flex-col  overflow-hidden">
       {/* Background neon glows */}
       <div className="bg-glow-container" aria-hidden="true">
         <div className="glow-primary"></div>
@@ -94,7 +94,7 @@ function App() {
         onNavigate={navigate}
       />
 
-      <main className="main-content">
+      <main className="main-content ">
         {error && (
           <div
             className="glass-panel animate-fade-in"
