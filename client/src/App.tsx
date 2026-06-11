@@ -168,7 +168,7 @@ function MockupShell({ currentPath, onNavigate, children }: MockupShellProps) {
           <div className="max-w-md">
             <h2 className="font-headline-sm text-2xl font-bold">Harvest Motion</h2>
             <p className="font-body-sm text-sm text-on-secondary/80 mt-3">
-              Wspólna stopka dla ekranów aplikacji wynajmu samochodów.
+              Wynajem samochodów.
             </p>
           </div>
           <div className="flex flex-wrap gap-5 text-sm text-on-secondary/80">
