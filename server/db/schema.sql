@@ -254,3 +254,8 @@ CREATE INDEX IF NOT EXISTS idx_rents_status ON Rents (status);
 CREATE INDEX IF NOT EXISTS idx_rents_dates ON Rents (startDate, expectedEndDate, endDate);
 CREATE INDEX IF NOT EXISTS idx_transactions_rent_id ON TransactionHistory (rentId);
 CREATE INDEX IF NOT EXISTS idx_transactions_status ON TransactionHistory (status);
+
+-- Seed default branch
+INSERT INTO Branches (branchName, address, phone, email, isActive)
+VALUES ('Warszawa Centrum', 'ul. Marszalkowska 1, Warszawa', '123456789', 'warszawa@harvestmotion.pl', TRUE)
+ON CONFLICT DO NOTHING;

@@ -273,7 +273,7 @@ function App() {
     switch (currentPath) {
       case "/":
       case "/about":
-        return <LandingPage />;
+        return <LandingPage onNavigate={navigate} />;
       case "/login":
         return <LoginPage onAuthenticated={handleAuthenticated} />;
       case "/register":
@@ -295,7 +295,15 @@ function App() {
       case "/worker-dashboard":
         return <WorkerDashboard />;
       case "/create-rental":
-        return <WorkerCreateRent />;
+        return (
+          <WorkerCreateRent
+            cars={cars}
+            onRentalCreated={() => {
+              loadAllData();
+              navigate("/worker");
+            }}
+          />
+        );
       case "/fleet":
       case "/fleet-status":
       case "/manage-fleet-status":
@@ -306,10 +314,6 @@ function App() {
   })();
 
   if (mockupRoute) {
-    if (currentPath === "/") {
-      return mockupRoute;
-    }
-
     return (
       <MockupShell currentPath={currentPath} onNavigate={navigate}>
         {mockupRoute}

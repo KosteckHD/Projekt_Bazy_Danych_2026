@@ -112,6 +112,7 @@ export interface AvailabilityResponse {
 
 export interface RentCreateData {
   carId: number;
+  userId?: number;
   pickupBranchId?: number | null;
   returnBranchId?: number | null;
   startDate: string;
@@ -134,4 +135,22 @@ export interface RentResponse {
   status: "Pending" | "Started" | "Ended" | "Cancelled";
   createdAt: string;
   updatedAt: string;
+}
+
+export interface User {
+  userid?: number;
+  userId?: number;
+  email: string;
+  firstName?: string;
+  firstname?: string;
+  lastName?: string;
+  lastname?: string;
+  phone?: string;
+  role?: string;
+  isActive?: boolean;
+  isactive?: boolean;
+  driverLicenseNumber?: string | null;
+  driverlicensenumber?: string | null;
+  driverLicenseExpiresAt?: string | null;
+  driverlicenseexpiresat?: string | null;
 }

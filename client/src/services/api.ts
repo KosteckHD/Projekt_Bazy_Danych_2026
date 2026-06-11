@@ -11,6 +11,7 @@ import type {
   RegisterData,
   RentCreateData,
   RentResponse,
+  User,
 } from "../types/api";
 
 const API_BASE_URL = "http://localhost:3000";
@@ -161,5 +162,15 @@ export async function createReservation(data: RentCreateData): Promise<RentRespo
     throw new Error(await parseApiError(res));
   }
 
+  return res.json();
+}
+
+export async function fetchUsers(): Promise<User[]> {
+  const res = await fetch(`${API_BASE_URL}/users`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
   return res.json();
 }

@@ -10,7 +10,6 @@ const carId = (car: Car) => car.carId ?? car.carid;
 const carBrand = (car: Car) => car.brandName ?? car.brandname;
 const carModel = (car: Car) => car.modelName ?? car.modelname;
 const carHourlyCost = (car: Car) => Number(car.hourlyCost ?? car.hourlycost ?? 0);
-const carBranchId = (car: Car) => car.branchId ?? car.branchid ?? null;
 const carBranchName = (car: Car) => car.branchName ?? car.branchname ?? "Oddział główny";
 const carBodyType = (car: Car) => car.bodyType ?? car.bodytype;
 const carHorsePower = (car: Car) => car.horsePower ?? car.horsepower;
@@ -39,7 +38,7 @@ const CarSearch: React.FC<CarSearchProps> = ({ onNavigate }) => {
         const carsData = await fetchCars();
         if (!ignore) {
           setCars(
-            carsData.filter((car) => car.status === "Available" && carBranchId(car)),
+            carsData.filter((car) => car.status === "Available"),
           );
         }
       } catch (err) {
@@ -164,7 +163,7 @@ const CarSearch: React.FC<CarSearchProps> = ({ onNavigate }) => {
                   <img
                     className="w-full h-full object-cover"
                     alt={`${carBrand(car)} ${carModel(car)}`}
-                    src={carImages[index % carImages.length]}
+                    src={car.imageUrl || car.imageurl || carImages[index % carImages.length]}
                   />
                   <span className="absolute left-4 top-4 rounded-full bg-secondary-container px-3 py-1 text-xs font-label-md text-on-secondary-container">
                     Dostępny
