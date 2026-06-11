@@ -197,3 +197,19 @@ export async function updateCarStatus(carId: number, status: string): Promise<an
   }
   return res.json();
 }
+
+export async function uploadCarImage(fileName: string, base64Data: string): Promise<{ imageUrl: string }> {
+  const res = await fetch(`${API_BASE_URL}/cars/upload-image`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ fileName, base64Data }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to upload image");
+  }
+  return data;
+}

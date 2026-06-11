@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { Brand, Car, PopularCarStat } from "../../types/api";
-import { addCar } from "../../services/api";
+import { addCar, uploadCarImage } from "../../services/api";
 
 interface DashboardProps {
   cars: Car[];
@@ -104,6 +104,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    setUploadError(null);
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onloadend = async () => {
+      try {
+        const base64Data = reader.result as string;
+        const result = await uploadCarImage(file.name, base64Data);
+        setFormData((prev) => ({
+          ...prev,
+          imageUrl: result.imageUrl,
+        }));
+      } catch (err) {
+        console.error("Failed to upload image", err);
+        setUploadError(err instanceof Error ? err.message : "Nie udało się przesłać zdjęcia.");
+      } finally {
+        setUploadingImage(false);
+      }
+    };
+  };
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -747,22 +776,61 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       ))}
                     </select>
                   </div>
-                  <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                  <div className="space-y-2 md:col-span-2 lg:col-span-3">
                     <label
                       className="text-xs font-semibold text-on-surface-variant ml-1"
                       htmlFor="imageUrl"
                     >
-                      URL Zdjęcia Pojazdu
+                      Zdjęcie Pojazdu
                     </label>
-                    <input
-                      type="url"
-                      id="imageUrl"
-                      name="imageUrl"
-                      placeholder="https://example.com/image.jpg"
-                      value={formData.imageUrl}
-                      onChange={handleInputChange}
-                      className="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-on-surface text-sm"
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                      <div className="space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          disabled={uploadingImage}
+                          className="w-full text-xs text-on-surface-variant file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
+                        />
+                        {uploadingImage && (
+                          <p className="text-xs text-primary font-semibold animate-pulse">
+                            Przesyłanie zdjęcia do API...
+                          </p>
+                        )}
+                        {uploadError && (
+                          <p className="text-xs text-error font-semibold">
+                            {uploadError}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <input
+                          type="url"
+                          id="imageUrl"
+                          name="imageUrl"
+                          placeholder="Adres URL zdjęcia (automatyczny lub zewnętrzny)"
+                          value={formData.imageUrl}
+                          onChange={handleInputChange}
+                          className="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-on-surface text-xs"
+                        />
+                      </div>
+                    </div>
+                    {formData.imageUrl && (
+                      <div className="mt-2 relative h-32 w-48 rounded-xl overflow-hidden border border-outline-variant/60 bg-surface-variant/20">
+                        <img 
+                          src={formData.imageUrl} 
+                          alt="Podgląd przesyłanego zdjęcia" 
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, imageUrl: "" }))}
+                          className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 hover:bg-black transition-all flex items-center justify-center"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

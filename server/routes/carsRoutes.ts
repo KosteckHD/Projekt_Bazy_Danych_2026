@@ -83,6 +83,12 @@ router.get(
   validate({ params: idParamSchema }),
   asyncHandler(carsController.listCarRents),
 );
+router.post(
+  '/upload-image',
+  authenticate,
+  requireRoles('Worker', 'Manager', 'Admin'),
+  asyncHandler(carsController.uploadImage),
+);
 router.post('/', authenticate, requireRoles('Manager', 'Admin'), validate({ body: carCreateSchema }), asyncHandler(carsController.createCar));
 router.patch(
   '/:id',

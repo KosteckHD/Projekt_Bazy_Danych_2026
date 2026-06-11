@@ -1,5 +1,43 @@
 import type { Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import * as carsService from '../services/carsService.js';
+
+export async function uploadImage(req: Request, res: Response) {
+  const { fileName, base64Data } = req.body;
+  if (!base64Data) {
+    res.status(400).json({ success: false, message: 'Brak danych pliku.' });
+    return;
+  }
+
+  const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    res.status(400).json({ success: false, message: 'Niepoprawny format Base64.' });
+    return;
+  }
+
+  const buffer = Buffer.from(matches[2], 'base64');
+  const ext = path.extname(fileName || 'image.jpg') || '.jpg';
+  const uniqueName = `car-${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
+
+  try {
+    fs.mkdirSync('uploads', { recursive: true });
+    const filePath = path.join('uploads', uniqueName);
+    fs.writeFileSync(filePath, buffer);
+
+    const host = req.get('host');
+    const protocol = req.protocol;
+    const imageUrl = `${protocol}://${host}/uploads/${uniqueName}`;
+
+    res.json({
+      success: true,
+      imageUrl
+    });
+  } catch (err) {
+    console.error('File write error:', err);
+    res.status(500).json({ success: false, message: 'Błąd podczas zapisywania pliku na serwerze.' });
+  }
+}
 
 export async function listCars(req: Request, res: Response) {
   res.json(await carsService.listCars(req.query));

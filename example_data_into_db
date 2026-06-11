@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# ==============================================================================
+# SCRIPT TO RUN ON YOUR HOST MACHINE (Terminal in the project root directory)
+# ==============================================================================
+
+echo "1. Kopiowanie zdjęć .webp do kontenera backendu (do folderu /server/uploads)..."
+docker exec wypozyczalnia-api mkdir -p /server/uploads
+docker cp "./examples/campbell-3ZUsNJhi_Ik-unsplash.webp" wypozyczalnia-api:/server/uploads/
+docker cp "./examples/dhiva-krishna-X16zXcbxU4U-unsplash.webp" wypozyczalnia-api:/server/uploads/
+docker cp "./examples/erik-mclean-ZRns2R5azu0-unsplash.webp" wypozyczalnia-api:/server/uploads/
+docker cp "./examples/joey-banks-YApiWyp0lqo-unsplash.webp" wypozyczalnia-api:/server/uploads/
+docker cp "./examples/josh-berquist-_4sWbzH5fp8-unsplash.webp" wypozyczalnia-api:/server/uploads/
+docker cp "./examples/olav-tvedt-6lSBynPRaAQ-unsplash.webp" wypozyczalnia-api:/server/uploads/
+docker cp "./examples/tyler-clemmensen-d1Jum1vVLew-unsplash.webp" wypozyczalnia-api:/server/uploads/
+
+echo "2. Wprowadzenie danych pojazdów do bazy PostgreSQL..."
+docker exec -i wypozyczalnia-db psql -U root -d rental_db << 'EOF'
+
+-- Dodanie marek (z obsługą konfliktów)
+INSERT INTO Brands (brandName, country) VALUES
+('Porsche', 'Germany'),
+('Lamborghini', 'Italy'),
+('Ford', 'USA'),
+('Mercedes-Benz', 'Germany'),
+('Tesla', 'USA'),
+('BMW', 'Germany')
+ON CONFLICT (brandName) DO NOTHING;
+
+-- Dodanie modeli aut
+INSERT INTO Models (modelName, brandId, hourlyCost, modelDescription) VALUES
+('Panamera', (SELECT brandId FROM Brands WHERE brandName = 'Porsche'), 180.00, 'Luksusowa limuzyna o sportowych osiągach.'),
+('911 Carrera', (SELECT brandId FROM Brands WHERE brandName = 'Porsche'), 250.00, 'Legenda szos. Kultowe, sportowe Porsche.'),
+('Huracán', (SELECT brandId FROM Brands WHERE brandName = 'Lamborghini'), 450.00, 'Ekstremalne wrażenia z jazdy włoskim supersamochodem.'),
+('Mustang Shelby GT350', (SELECT brandId FROM Brands WHERE brandName = 'Ford'), 150.00, 'Klasyczny amerykański muscle car z potężnym silnikiem V8.'),
+('C63 AMG Coupe', (SELECT brandId FROM Brands WHERE brandName = 'Mercedes-Benz'), 190.00, 'Eleganckie i piekielnie szybkie niemieckie coupe.'),
+('Model S Plaid', (SELECT brandId FROM Brands WHERE brandName = 'Tesla'), 220.00, 'Przyspieszenie, które zapiera dech w piersiach.'),
+('M3 Competition', (SELECT brandId FROM Brands WHERE brandName = 'BMW'), 200.00, 'Precyzja prowadzenia i niezrównana moc serii M.')
+ON CONFLICT (brandId, modelName) DO NOTHING;
+
+-- Dodanie konkretnych pojazdów (przypisanych do pierwszego dostępnego oddziału)
+INSERT INTO Cars (modelId, branchId, status, color, doorAmount, productionDate, VIN, registrationNumber, mileage, carEngine, horsePower, bodyType, imageUrl) VALUES
+((SELECT modelId FROM Models WHERE modelName = 'Panamera'), (SELECT branchId FROM Branches LIMIT 1), 'Available', 'Black', 4, '2022-05-10', 'WP0AA2A9XNSA12345', 'WPI 99991', 12500, 2.9, 440, 'COUPE', 'http://localhost:3000/uploads/campbell-3ZUsNJhi_Ik-unsplash.webp'),
+((SELECT modelId FROM Models WHERE modelName = '911 Carrera'), (SELECT branchId FROM Branches LIMIT 1), 'Available', 'Silver', 2, '2021-09-15', 'WP0AB2A9YNSA67890', 'WPI 99992', 8200, 3.0, 385, 'COUPE', 'http://localhost:3000/uploads/erik-mclean-ZRns2R5azu0-unsplash.webp'),
+((SELECT modelId FROM Models WHERE modelName = 'Huracán'), (SELECT branchId FROM Branches LIMIT 1), 'Available', 'Yellow', 2, '2023-03-20', 'ZHWBU1ZR4NLA11223', 'WPI 99993', 3100, 5.2, 640, 'COUPE', 'http://localhost:3000/uploads/dhiva-krishna-X16zXcbxU4U-unsplash.webp'),
+((SELECT modelId FROM Models WHERE modelName = 'Mustang Shelby GT350'), (SELECT branchId FROM Branches LIMIT 1), 'Available', 'Black', 2, '2020-07-12', '1FA6P8JZ0HLA33445', 'WPI 99994', 21400, 5.2, 526, 'COUPE', 'http://localhost:3000/uploads/joey-banks-YApiWyp0lqo-unsplash.webp'),
+((SELECT modelId FROM Models WHERE modelName = 'C63 AMG Coupe'), (SELECT branchId FROM Branches LIMIT 1), 'Available', 'Grey', 2, '2021-04-18', 'WDDGF4HB6FLA55667', 'WPI 99995', 18600, 4.0, 510, 'COUPE', 'http://localhost:3000/uploads/josh-berquist-_4sWbzH5fp8-unsplash.webp'),
+((SELECT modelId FROM Models WHERE modelName = 'Model S Plaid'), (SELECT branchId FROM Branches LIMIT 1), 'Available', 'Grey', 4, '2022-11-05', '5YJSA1E22NFA77889', 'WPI 99996', 5600, 0.0, 1020, 'SEDAN', 'http://localhost:3000/uploads/olav-tvedt-6lSBynPRaAQ-unsplash.webp'),
+((SELECT modelId FROM Models WHERE modelName = 'M3 Competition'), (SELECT branchId FROM Branches LIMIT 1), 'Available', 'Black', 4, '2022-01-25', 'WBA5Z3C08NKA99001', 'WPI 99997', 11200, 3.0, 510, 'SEDAN', 'http://localhost:3000/uploads/tyler-clemmensen-d1Jum1vVLew-unsplash.webp')
+ON CONFLICT (VIN) DO NOTHING;
+
+EOF
+
+echo "Gotowe! Dane pojazdów i zdjęcia zostały załadowane do systemu."
