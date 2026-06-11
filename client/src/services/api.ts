@@ -11,6 +11,7 @@ import type {
   RegisterData,
   RentCreateData,
   RentResponse,
+  User,
 } from "../types/api";
 
 const API_BASE_URL = "http://localhost:3000";
@@ -84,8 +85,16 @@ export async function fetchBrands(): Promise<Brand[]> {
   return res.json();
 }
 
-export async function fetchCars(): Promise<Car[]> {
-  const res = await fetch(`${API_BASE_URL}/cars`);
+export async function fetchCars(filters?: { startDate?: string; expectedEndDate?: string }): Promise<Car[]> {
+  let url = `${API_BASE_URL}/cars`;
+  if (filters?.startDate && filters?.expectedEndDate) {
+    const q = new URLSearchParams({
+      startDate: filters.startDate,
+      expectedEndDate: filters.expectedEndDate,
+    });
+    url += `?${q.toString()}`;
+  }
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch cars: ${res.statusText}`);
   }
@@ -161,5 +170,123 @@ export async function createReservation(data: RentCreateData): Promise<RentRespo
     throw new Error(await parseApiError(res));
   }
 
+  return res.json();
+}
+
+export async function fetchUsers(): Promise<User[]> {
+  const res = await fetch(`${API_BASE_URL}/users`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function fetchPopularCars(): Promise<Car[]> {
+  const res = await fetch(`${API_BASE_URL}/cars/popular`);
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function updateCarStatus(carId: number, status: string): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/cars/${carId}/status`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function uploadCarImage(fileName: string, base64Data: string): Promise<{ imageUrl: string }> {
+  const res = await fetch(`${API_BASE_URL}/cars/upload-image`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({ fileName, base64Data }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || "Failed to upload image");
+  }
+  return data;
+}
+
+export async function fetchMyRents(): Promise<RentResponse[]> {
+  const res = await fetch(`${API_BASE_URL}/rents/my`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function fetchRents(): Promise<RentResponse[]> {
+  const res = await fetch(`${API_BASE_URL}/rents`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function startRent(id: number): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/rents/${id}/start`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function finishRent(id: number, data: { carStatus?: string; mileage?: number; paymentMethod?: string } = {}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/rents/${id}/finish`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({
+      carStatus: data.carStatus || "Available",
+      paymentMethod: data.paymentMethod || "Card",
+      ...data
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function cancelNoShowRent(id: number): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/rents/${id}/cancel-no-show`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
   return res.json();
 }

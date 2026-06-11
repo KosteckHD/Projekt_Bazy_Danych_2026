@@ -80,7 +80,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     : showWorkerNav
       ? workerLinks
       : customerLinks;
-  const homePath = showWorkerNav ? "/worker" : isAuthenticated ? "/customer-dashboard" : "/";
+  const homePath = showWorkerNav
+    ? "/worker"
+    : isAuthenticated
+      ? "/customer-dashboard"
+      : "/";
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-header shadow-sm h-20 flex items-center border-b border-outline-variant/30">

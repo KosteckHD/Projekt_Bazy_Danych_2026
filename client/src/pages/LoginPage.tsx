@@ -6,6 +6,8 @@ type LoginPageProps = {
 };
 
 const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -14,12 +16,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
     setError(null);
     setSubmitting(true);
 
-    const formData = new FormData(event.currentTarget);
-
     try {
       const session = await loginUser({
-        email: String(formData.get("email") || ""),
-        password: String(formData.get("password") || ""),
+        email: email,
+        password: password,
       });
 
       localStorage.setItem("taurus_token", session.token);
@@ -30,6 +30,29 @@ const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
         err instanceof Error
           ? err.message
           : "Nie udało się zalogować. Sprawdź dane i spróbuj ponownie.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const session = await loginUser({
+        email: "admin@admin.com",
+        password: "adminadmin",
+      });
+
+      localStorage.setItem("taurus_token", session.token);
+      localStorage.setItem("taurus_user", JSON.stringify(session.user));
+      onAuthenticated?.();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Nie udało się zalogować jako Admin.",
       );
     } finally {
       setSubmitting(false);
@@ -82,6 +105,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
                     placeholder="jan@example.com"
                     required
                     type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div className="space-y-stack-sm">
@@ -99,6 +124,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
                     placeholder="••••••••"
                     required
                     type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
               </div>
@@ -118,6 +145,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onAuthenticated }) => {
               >
                 {submitting ? "Logowanie..." : "Zaloguj się"}
               </button>
+
+              <button
+                type="button"
+                onClick={handleAdminLogin}
+                className="w-full mt-3 bg-secondary text-on-secondary font-label-md text-label-md py-4 px-6 rounded-lg shadow-sm border-b-2 border-secondary-container hover:bg-secondary/90 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                disabled={submitting}
+              >
+                <span className="material-symbols-outlined">admin_panel_settings</span>
+                Zaloguj jako Admin (Konto testowe)
+              </button>
+
               <p className="text-center font-body-sm text-body-sm text-on-surface-variant mt-stack-md">
                 Nie masz konta?{" "}
                 <a className="text-primary hover:underline transition-colors" href="/register">

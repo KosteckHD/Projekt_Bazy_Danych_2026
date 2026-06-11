@@ -168,7 +168,7 @@ function MockupShell({ currentPath, onNavigate, children }: MockupShellProps) {
           <div className="max-w-md">
             <h2 className="font-headline-sm text-2xl font-bold">Harvest Motion</h2>
             <p className="font-body-sm text-sm text-on-secondary/80 mt-3">
-              Wspólna stopka dla ekranów aplikacji wynajmu samochodów.
+              Wynajem samochodów.
             </p>
           </div>
           <div className="flex flex-wrap gap-5 text-sm text-on-secondary/80">
@@ -273,7 +273,7 @@ function App() {
     switch (currentPath) {
       case "/":
       case "/about":
-        return <LandingPage />;
+        return <LandingPage onNavigate={navigate} />;
       case "/login":
         return <LoginPage onAuthenticated={handleAuthenticated} />;
       case "/register":
@@ -284,18 +284,26 @@ function App() {
       case "/customer":
       case "/client-dashboard":
       case "/customer-dashboard":
-        return <ClientDashboard />;
+        return <ClientDashboard onNavigate={navigate} />;
       case "/reservation":
       case "/create-reservation":
         return <ClientCreateReservation />;
       case "/my-rentals":
       case "/rental-history":
-        return <ClientRentHistory />;
+        return <ClientRentHistory onNavigate={navigate} />;
       case "/worker":
       case "/worker-dashboard":
         return <WorkerDashboard />;
       case "/create-rental":
-        return <WorkerCreateRent />;
+        return (
+          <WorkerCreateRent
+            cars={cars}
+            onRentalCreated={() => {
+              loadAllData();
+              navigate("/worker");
+            }}
+          />
+        );
       case "/fleet":
       case "/fleet-status":
       case "/manage-fleet-status":
@@ -306,10 +314,6 @@ function App() {
   })();
 
   if (mockupRoute) {
-    if (currentPath === "/") {
-      return mockupRoute;
-    }
-
     return (
       <MockupShell currentPath={currentPath} onNavigate={navigate}>
         {mockupRoute}

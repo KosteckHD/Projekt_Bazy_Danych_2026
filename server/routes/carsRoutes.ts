@@ -9,6 +9,7 @@ import {
   carStatuses,
   idParamSchema,
   validate,
+  dateTimeSchema,
 } from '../middleware/validate.js';
 
 const router = Router();
@@ -32,6 +33,7 @@ const carCreateBase = {
   carEngine: z.coerce.number().nonnegative(),
   horsePower: z.coerce.number().int().positive(),
   bodyType: z.enum(bodyTypes),
+  imageUrl: z.string().trim().max(2048).optional().nullable(),
 };
 
 const carCreateWithModelIdSchema = z.object({
@@ -71,15 +73,24 @@ const carQuerySchema = z.object({
   minHourlyCost: z.coerce.number().nonnegative().optional(),
   maxHourlyCost: z.coerce.number().nonnegative().optional(),
   availableOnly: z.coerce.boolean().optional(),
+  startDate: dateTimeSchema.optional(),
+  expectedEndDate: dateTimeSchema.optional(),
 });
 
 router.get('/', validate({ query: carQuerySchema }), asyncHandler(carsController.listCars));
 router.get('/available', asyncHandler(carsController.listAvailableCars));
+router.get('/popular', asyncHandler(carsController.listPopularCars));
 router.get('/:id', validate({ params: idParamSchema }), asyncHandler(carsController.getCar));
 router.get(
   '/:id/rents',
   validate({ params: idParamSchema }),
   asyncHandler(carsController.listCarRents),
+);
+router.post(
+  '/upload-image',
+  authenticate,
+  requireRoles('Worker', 'Manager', 'Admin'),
+  asyncHandler(carsController.uploadImage),
 );
 router.post('/', authenticate, requireRoles('Manager', 'Admin'), validate({ body: carCreateSchema }), asyncHandler(carsController.createCar));
 router.patch(

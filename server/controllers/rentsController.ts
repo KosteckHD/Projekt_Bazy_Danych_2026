@@ -5,6 +5,10 @@ export async function listRents(_req: Request, res: Response) {
   res.json(await rentsService.listRents());
 }
 
+export async function listMyRents(req: Request, res: Response) {
+  res.json(await rentsService.listMyRents(req.user!.userId));
+}
+
 export async function listCurrentRents(_req: Request, res: Response) {
   res.json(await rentsService.listCurrentRents());
 }
@@ -36,6 +40,7 @@ export async function createRent(req: Request, res: Response) {
   const rent = await rentsService.createRent({
     ...req.body,
     userId: req.user?.role === 'Customer' ? req.user.userId : req.body.userId,
+    workerId: req.user && req.user.role !== 'Customer' ? req.user.userId : req.body.workerId,
   });
   res.status(201).json(rent);
 }

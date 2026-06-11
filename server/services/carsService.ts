@@ -1,7 +1,7 @@
-import { query, queryOne, withTransaction, toDualCase } from '../config/db.js';
-import { addFilter, buildUpdateSet } from '../config/sql.js';
-import { conflict, notFound } from '../handlers/httpError.js';
-import { ensureBranchStaff } from './branchStaffService.js';
+import { query, queryOne, withTransaction, toDualCase } from "../config/db.js";
+import { addFilter, buildUpdateSet } from "../config/sql.js";
+import { conflict, notFound } from "../handlers/httpError.js";
+import { ensureBranchStaff } from "./branchStaffService.js";
 
 export type CarInput = {
   modelId?: number;
@@ -22,6 +22,7 @@ export type CarInput = {
   horsePower: number;
   bodyType: string;
   isActive?: boolean;
+  imageUrl?: string | null;
 };
 
 export type CarFilters = {
@@ -34,6 +35,8 @@ export type CarFilters = {
   minHourlyCost?: number;
   maxHourlyCost?: number;
   availableOnly?: boolean;
+  startDate?: string;
+  expectedEndDate?: string;
 };
 
 const carSelect = `
@@ -56,6 +59,14 @@ const carSelect = `
     c.carEngine::float AS "carEngine",
     c.horsePower AS "horsePower",
     c.bodyType AS "bodyType",
+    c.imageUrl AS "imageUrl",
+    (
+      SELECT MAX(r.expectedEndDate)
+      FROM Rents r
+      WHERE r.carId = c.carId
+        AND r.status IN ('Started', 'Pending')
+        AND r.expectedEndDate > NOW()
+    ) AS "rentedUntil",
     c.isActive AS "isActive",
     c.createdAt AS "createdAt",
     c.updatedAt AS "updatedAt"
@@ -66,36 +77,91 @@ const carSelect = `
 `;
 
 export async function listCars(filters: CarFilters) {
-  const clauses: string[] = ['c.isActive = TRUE'];
+  const clauses: string[] = ["c.isActive = TRUE"];
   const values: unknown[] = [];
 
-  addFilter(clauses, values, 'b.brandId = ?', filters.brandId);
-  addFilter(clauses, values, 'c.modelId = ?', filters.modelId);
-  addFilter(clauses, values, 'c.branchId = ?', filters.branchId);
-  addFilter(clauses, values, 'c.status = ?', filters.status);
-  addFilter(clauses, values, 'c.color = ?', filters.color);
-  addFilter(clauses, values, 'c.bodyType = ?', filters.bodyType);
-  addFilter(clauses, values, 'm.hourlyCost >= ?', filters.minHourlyCost);
-  addFilter(clauses, values, 'm.hourlyCost <= ?', filters.maxHourlyCost);
+  addFilter(clauses, values, "b.brandId = ?", filters.brandId);
+  addFilter(clauses, values, "c.modelId = ?", filters.modelId);
+  addFilter(clauses, values, "c.branchId = ?", filters.branchId);
+  addFilter(clauses, values, "c.status = ?", filters.status);
+  addFilter(clauses, values, "c.color = ?", filters.color);
+  addFilter(clauses, values, "c.bodyType = ?", filters.bodyType);
+  addFilter(clauses, values, "m.hourlyCost >= ?", filters.minHourlyCost);
+  addFilter(clauses, values, "m.hourlyCost <= ?", filters.maxHourlyCost);
 
   if (filters.availableOnly === true) {
     clauses.push("c.status = 'Available'");
   }
 
+  if (filters.startDate && filters.expectedEndDate) {
+    const start = new Date(filters.startDate);
+    const end = new Date(filters.expectedEndDate);
+    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+      values.push(start);
+      const startIdx = values.length;
+      values.push(end);
+      const endIdx = values.length;
+      clauses.push(`
+        NOT EXISTS (
+          SELECT 1 FROM Rents r
+          WHERE r.carId = c.carId
+            AND r.status IN ('Pending', 'Started')
+            AND r.startDate < $${endIdx}
+            AND COALESCE(r.endDate, r.expectedEndDate) > $${startIdx}
+        )
+      `);
+    }
+  }
+
   return query(
-    `${carSelect} WHERE ${clauses.join(' AND ')} ORDER BY b.brandName ASC, m.modelName ASC`,
+    `${carSelect} WHERE ${clauses.join(" AND ")} ORDER BY b.brandName ASC, m.modelName ASC`,
     values,
   );
 }
 
 export async function listAvailableCars() {
-  return query('SELECT * FROM vw_available_cars ORDER BY brandName ASC, modelName ASC');
+  return query(
+    "SELECT * FROM vw_available_cars ORDER BY brandName ASC, modelName ASC",
+  );
+}
+
+export async function listPopularCars() {
+  return query(`
+    SELECT 
+      c.carId AS "carId",
+      c.modelId AS "modelId",
+      c.branchId AS "branchId",
+      c.status AS "status",
+      c.color AS "color",
+      c.doorAmount AS "doorAmount",
+      c.productionDate AS "productionDate",
+      c.VIN AS "VIN",
+      c.registrationNumber AS "registrationNumber",
+      c.mileage AS "mileage",
+      c.carEngine AS "carEngine",
+      c.horsePower AS "horsePower",
+      c.bodyType AS "bodyType",
+      c.imageUrl AS "imageUrl",
+      c.isActive AS "isActive",
+      c.createdAt AS "createdAt",
+      c.updatedAt AS "updatedAt",
+      m.modelName AS "modelName",
+      m.hourlyCost AS "hourlyCost",
+      b.brandName AS "brandName",
+      COALESCE(v.rental_count, 0) AS "rentalCount"
+    FROM Cars c
+    JOIN Models m ON m.modelId = c.modelId
+    JOIN Brands b ON b.brandId = m.brandId
+    LEFT JOIN vw_most_popular_cars v ON v.modelId = m.modelId AND v.brandId = b.brandId
+    WHERE c.isActive = TRUE
+    ORDER BY v.rental_count DESC NULLS LAST, c.carId ASC
+  `);
 }
 
 export async function getCar(id: number) {
   const car = await queryOne(`${carSelect} WHERE c.carId = $1`, [id]);
   if (!car) {
-    notFound('Car not found');
+    notFound("Car not found");
   }
 
   return car;
@@ -130,16 +196,16 @@ export async function createCar(input: CarInput) {
       // 1. Check or insert brand
       let brandId: number;
       const brandCheck = await client.query<{ brandid: number }>(
-        'SELECT brandId FROM Brands WHERE LOWER(brandName) = LOWER($1)',
-        [input.brandName!.trim()]
+        "SELECT brandId FROM Brands WHERE LOWER(brandName) = LOWER($1)",
+        [input.brandName!.trim()],
       );
 
       if (brandCheck.rows.length > 0) {
         brandId = brandCheck.rows[0]!.brandid;
       } else {
         const brandInsert = await client.query<{ brandid: number }>(
-          'INSERT INTO Brands (brandName, country) VALUES ($1, $2) RETURNING brandId',
-          [input.brandName!.trim(), input.country || 'Other']
+          "INSERT INTO Brands (brandName, country) VALUES ($1, $2) RETURNING brandId",
+          [input.brandName!.trim(), input.country || "Other"],
         );
         brandId = brandInsert.rows[0]!.brandid;
       }
@@ -147,16 +213,21 @@ export async function createCar(input: CarInput) {
       // 2. Check or insert model
       let modelId: number;
       const modelCheck = await client.query<{ modelid: number }>(
-        'SELECT modelId FROM Models WHERE LOWER(modelName) = LOWER($1) AND brandId = $2',
-        [input.modelName!.trim(), brandId]
+        "SELECT modelId FROM Models WHERE LOWER(modelName) = LOWER($1) AND brandId = $2",
+        [input.modelName!.trim(), brandId],
       );
 
       if (modelCheck.rows.length > 0) {
         modelId = modelCheck.rows[0]!.modelid;
       } else {
         const modelInsert = await client.query<{ modelid: number }>(
-          'INSERT INTO Models (modelName, brandId, hourlyCost, modelDescription) VALUES ($1, $2, $3, $4) RETURNING modelId',
-          [input.modelName!.trim(), brandId, Number(input.hourlyCost || 0), input.modelDescription || '']
+          "INSERT INTO Models (modelName, brandId, hourlyCost, modelDescription) VALUES ($1, $2, $3, $4) RETURNING modelId",
+          [
+            input.modelName!.trim(),
+            brandId,
+            Number(input.hourlyCost || 0),
+            input.modelDescription || "",
+          ],
         );
         modelId = modelInsert.rows[0]!.modelid;
       }
@@ -183,9 +254,9 @@ export async function createCar(input: CarInput) {
         `
           INSERT INTO Cars (
             modelId, branchId, status, color, doorAmount, productionDate, VIN,
-            registrationNumber, mileage, carEngine, horsePower, bodyType
+            registrationNumber, mileage, carEngine, horsePower, bodyType, imageUrl
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
           RETURNING
             carId AS "carId",
             modelId AS "modelId",
@@ -200,6 +271,7 @@ export async function createCar(input: CarInput) {
             carEngine::float AS "carEngine",
             horsePower AS "horsePower",
             bodyType AS "bodyType",
+            imageUrl AS "imageUrl",
             isActive AS "isActive",
             createdAt AS "createdAt",
             updatedAt AS "updatedAt"
@@ -207,7 +279,7 @@ export async function createCar(input: CarInput) {
         [
           modelId,
           input.branchId ?? null,
-          input.status ?? 'Available',
+          input.status ?? "Available",
           input.color,
           input.doorAmount,
           input.productionDate,
@@ -217,7 +289,8 @@ export async function createCar(input: CarInput) {
           input.carEngine,
           input.horsePower,
           input.bodyType,
-        ]
+          input.imageUrl ?? null,
+        ],
       );
 
       return toDualCase(carInsert.rows[0]);
@@ -228,9 +301,9 @@ export async function createCar(input: CarInput) {
     `
       INSERT INTO Cars (
         modelId, branchId, status, color, doorAmount, productionDate, VIN,
-        registrationNumber, mileage, carEngine, horsePower, bodyType
+        registrationNumber, mileage, carEngine, horsePower, bodyType, imageUrl
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING
         carId AS "carId",
         modelId AS "modelId",
@@ -245,6 +318,7 @@ export async function createCar(input: CarInput) {
         carEngine::float AS "carEngine",
         horsePower AS "horsePower",
         bodyType AS "bodyType",
+        imageUrl AS "imageUrl",
         isActive AS "isActive",
         createdAt AS "createdAt",
         updatedAt AS "updatedAt"
@@ -252,7 +326,7 @@ export async function createCar(input: CarInput) {
     [
       input.modelId,
       input.branchId ?? null,
-      input.status ?? 'Available',
+      input.status ?? "Available",
       input.color,
       input.doorAmount,
       input.productionDate,
@@ -262,6 +336,7 @@ export async function createCar(input: CarInput) {
       input.carEngine,
       input.horsePower,
       input.bodyType,
+      input.imageUrl ?? null,
     ],
   );
 }
@@ -271,19 +346,20 @@ export async function updateCar(id: number, input: Partial<CarInput>) {
   const setClause = buildUpdateSet(
     input,
     {
-      modelId: 'modelId',
-      branchId: 'branchId',
-      status: 'status',
-      color: 'color',
-      doorAmount: 'doorAmount',
-      productionDate: 'productionDate',
-      VIN: 'VIN',
-      registrationNumber: 'registrationNumber',
-      mileage: 'mileage',
-      carEngine: 'carEngine',
-      horsePower: 'horsePower',
-      bodyType: 'bodyType',
-      isActive: 'isActive',
+      modelId: "modelId",
+      branchId: "branchId",
+      status: "status",
+      color: "color",
+      doorAmount: "doorAmount",
+      productionDate: "productionDate",
+      VIN: "VIN",
+      registrationNumber: "registrationNumber",
+      mileage: "mileage",
+      carEngine: "carEngine",
+      horsePower: "horsePower",
+      bodyType: "bodyType",
+      isActive: "isActive",
+      imageUrl: "imageUrl",
     },
     values,
   );
@@ -308,6 +384,7 @@ export async function updateCar(id: number, input: Partial<CarInput>) {
         carEngine::float AS "carEngine",
         horsePower AS "horsePower",
         bodyType AS "bodyType",
+        imageUrl AS "imageUrl",
         isActive AS "isActive",
         createdAt AS "createdAt",
         updatedAt AS "updatedAt"
@@ -316,22 +393,26 @@ export async function updateCar(id: number, input: Partial<CarInput>) {
   );
 
   if (!car) {
-    notFound('Car not found');
+    notFound("Car not found");
   }
 
   return car;
 }
 
-export async function updateCarStatus(id: number, status: string, operatorId: number) {
+export async function updateCarStatus(
+  id: number,
+  status: string,
+  operatorId: number,
+) {
   const current = await queryOne<{ branchid: number | null }>(
-    'SELECT branchId FROM Cars WHERE carId = $1',
+    "SELECT branchId FROM Cars WHERE carId = $1",
     [id],
   );
   if (!current) {
-    notFound('Car not found');
+    notFound("Car not found");
   }
 
-  await ensureBranchStaff(operatorId, current.branchid, 'change car status');
+  await ensureBranchStaff(operatorId, current.branchid, "change car status");
 
   const car = await queryOne(
     `
@@ -344,7 +425,7 @@ export async function updateCarStatus(id: number, status: string, operatorId: nu
   );
 
   if (!car) {
-    notFound('Car not found');
+    notFound("Car not found");
   }
 
   return car;
@@ -352,7 +433,7 @@ export async function updateCarStatus(id: number, status: string, operatorId: nu
 
 export async function deleteCar(id: number) {
   const usage = await queryOne<{ count: string }>(
-    'SELECT COUNT(*) AS count FROM Rents WHERE carId = $1',
+    "SELECT COUNT(*) AS count FROM Rents WHERE carId = $1",
     [id],
   );
 
@@ -368,15 +449,18 @@ export async function deleteCar(id: number) {
     );
 
     if (!archived) {
-      notFound('Car not found');
+      notFound("Car not found");
     }
 
     return { archived: true, car: archived };
   }
 
-  const car = await queryOne('DELETE FROM Cars WHERE carId = $1 RETURNING carId', [id]);
+  const car = await queryOne(
+    "DELETE FROM Cars WHERE carId = $1 RETURNING carId",
+    [id],
+  );
   if (!car) {
-    notFound('Car not found');
+    notFound("Car not found");
   }
 
   return null;

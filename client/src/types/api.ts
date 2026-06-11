@@ -35,6 +35,10 @@ export interface Car {
   brandname: string;
   brandName?: string;
   country: string;
+  imageurl?: string | null;
+  imageUrl?: string | null;
+  renteduntil?: string | null;
+  rentedUntil?: string | null;
 }
 
 export interface PopularCarStat {
@@ -63,6 +67,7 @@ export interface NewCarData {
   carEngine: string | number;
   horsePower: string | number;
   bodyType: string;
+  imageUrl?: string;
 }
 
 export interface AddCarResponse {
@@ -109,6 +114,7 @@ export interface AvailabilityResponse {
 
 export interface RentCreateData {
   carId: number;
+  userId?: number;
   pickupBranchId?: number | null;
   returnBranchId?: number | null;
   startDate: string;
@@ -126,9 +132,45 @@ export interface RentResponse {
   returnBranchId: number | null;
   startDate: string;
   expectedEndDate: string;
+  endDate?: string | null;
+  enddate?: string | null;
   additionalCost: number;
   totalCost: number;
+  totalcost?: number;
+  hourlyCost?: number;
+  hourlycost?: number;
   status: "Pending" | "Started" | "Ended" | "Cancelled";
   createdAt: string;
   updatedAt: string;
+  firstName?: string;
+  firstname?: string;
+  lastName?: string;
+  lastname?: string;
+  VIN?: string;
+  vin?: string;
+  registrationNumber?: string | null;
+  imageUrl?: string | null;
+  modelName?: string;
+  modelname?: string;
+  brandName?: string;
+  brandname?: string;
+  email?: string;
+}
+
+export interface User {
+  userid?: number;
+  userId?: number;
+  email: string;
+  firstName?: string;
+  firstname?: string;
+  lastName?: string;
+  lastname?: string;
+  phone?: string;
+  role?: string;
+  isActive?: boolean;
+  isactive?: boolean;
+  driverLicenseNumber?: string | null;
+  driverlicensenumber?: string | null;
+  driverLicenseExpiresAt?: string | null;
+  driverlicenseexpiresat?: string | null;
 }
