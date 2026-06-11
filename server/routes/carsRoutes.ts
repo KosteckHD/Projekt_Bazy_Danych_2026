@@ -9,6 +9,7 @@ import {
   carStatuses,
   idParamSchema,
   validate,
+  dateTimeSchema,
 } from '../middleware/validate.js';
 
 const router = Router();
@@ -72,6 +73,8 @@ const carQuerySchema = z.object({
   minHourlyCost: z.coerce.number().nonnegative().optional(),
   maxHourlyCost: z.coerce.number().nonnegative().optional(),
   availableOnly: z.coerce.boolean().optional(),
+  startDate: dateTimeSchema.optional(),
+  expectedEndDate: dateTimeSchema.optional(),
 });
 
 router.get('/', validate({ query: carQuerySchema }), asyncHandler(carsController.listCars));

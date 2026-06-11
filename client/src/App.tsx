@@ -284,13 +284,13 @@ function App() {
       case "/customer":
       case "/client-dashboard":
       case "/customer-dashboard":
-        return <ClientDashboard />;
+        return <ClientDashboard onNavigate={navigate} />;
       case "/reservation":
       case "/create-reservation":
         return <ClientCreateReservation />;
       case "/my-rentals":
       case "/rental-history":
-        return <ClientRentHistory />;
+        return <ClientRentHistory onNavigate={navigate} />;
       case "/worker":
       case "/worker-dashboard":
         return <WorkerDashboard />;

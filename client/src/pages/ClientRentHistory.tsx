@@ -1,54 +1,75 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { fetchMyRents } from "../services/api";
+import type { RentResponse } from "../types/api";
 
-const rentals = [
-  {
-    id: "RENT-4308",
-    car: "Volvo XC90",
-    dates: "12 cze 2024 - 15 cze 2024",
-    branch: "Kraków Lotnisko → Kraków Lotnisko",
-    cost: "1 450 PLN",
-    status: "Zakończony",
-    payment: "Opłacone",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBUEd1s8xbmXto_r6zRpGjFzqOpC_mtLE2mJFfuFzJXfU3mFW8cIIfduU2YjsHeIRPvPam-QtfZgwm73cgX8mogSrjPsq_EOY4HsMugRoJkZj_ORwGRXQ9xsQOeUVbB0eF5Ulp39S0PfyX8NgMLbSbhkem43kBJZe51US7zOR1dApk8Gia2grnhoq3Z75WPxFGASBGHB51UMsnO10ZrlQexfQWnvOtDUUPVXKix5fYUuCYj7jVmke1cfjoTL2hkSxKAipEWNdA9kh5y",
-  },
-  {
-    id: "RES-8923",
-    car: "Volvo XC60 Recharge",
-    dates: "24 cze 2024 - 26 cze 2024",
-    branch: "Warszawa Centrum → Gdańsk Główny",
-    cost: "2 215 PLN",
-    status: "Oczekuje",
-    payment: "Do zapłaty",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBa7pg-FPGk-ZWHrza-IWpCZGMV3nB97yPy8xz927W_g2DiACxhaNI4S0hNBkONN4AebFU_GeDtNupNXtOotggossDdEXJKORNZaF9JaAv7amy8ceTM-AdHBHqhoFJmG4Jy0GJjje-VC3x3qIBo974lWZjooJKR3ZQuqjRAAkMaNG1By7kfxJ3nAGiBehMWa5uJW5qsh_06TDJNs7KhGpa3YeXN1chZgG0q09ejjgTAe2qsZ9udcIoYtCfW-OmzPHqOBI4oZZXhIZSx",
-  },
-  {
-    id: "RENT-4271",
-    car: "BMW Seria 3",
-    dates: "4 maj 2024 - 5 maj 2024",
-    branch: "Warszawa Centrum → Warszawa Centrum",
-    cost: "580 PLN",
-    status: "Anulowany",
-    payment: "Opłata no-show",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDlU3PKzTT1am7QM_RAP0NPoVCZsSIptZbbQaKJ4dv4_s_8n0oUovlmxk0SX3lRFkaNyJeCFD_Gi5N3Ry9Xy761b0_yvOsNT99AjxT-cY7NYLGxFX8nuEefh12xJDZ9SLE7o1SV8Fo8AOGN2dqoyvtjQl2mVoM4o_CYvYBeFWFg5p1vDAUt1p3QY84uEZVQVRKuR6EddYjbay1_95LGQm1QCVe8nN1gLeUuKqSu2qHMSBQ2vXhILM6MwCLM06AkN_RnO9",
-  },
-];
+interface ClientRentHistoryProps {
+  onNavigate?: (path: string) => void;
+}
 
 const statusClass: Record<string, string> = {
   Zakończony: "bg-secondary-container text-on-secondary-container",
   Oczekuje: "bg-primary-fixed text-on-primary-fixed",
+  "W trakcie": "bg-success/20 text-success border border-success/30",
   Anulowany: "bg-error-container text-on-error-container",
 };
 
-const ClientRentHistory: React.FC = () => {
+const ClientRentHistory: React.FC<ClientRentHistoryProps> = ({ onNavigate }) => {
+  const [rentals, setRentals] = useState<RentResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("Wszystkie");
+
+  useEffect(() => {
+    fetchMyRents()
+      .then((data) => {
+        setRentals(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load rent history:", err);
+        setError(err.message || "Nie udało się wczytać historii wynajmów.");
+        setLoading(false);
+      });
+  }, []);
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return "Oczekuje";
+      case "Started":
+        return "W trakcie";
+      case "Ended":
+        return "Zakończony";
+      case "Cancelled":
+        return "Anulowany";
+      default:
+        return status;
+    }
+  };
+
+  const formatDateRange = (startStr: string, endStr: string) => {
+    const options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" };
+    const start = new Date(startStr).toLocaleDateString("pl-PL", options);
+    const end = new Date(endStr).toLocaleDateString("pl-PL", options);
+    return `${start} — ${end}`;
+  };
+
+  const filteredRentals = rentals.filter((rent) => {
+    if (filter === "Wszystkie") return true;
+    return getStatusLabel(rent.status) === filter;
+  });
+
   return (
-    <div className="bg-background min-h-screen flex flex-col font-body-md text-body-md text-on-background">
+    <div className="bg-[#f9f5eb] min-h-screen flex flex-col font-body-md text-body-md text-on-background">
       <main className="flex-grow pb-stack-lg px-margin-desktop max-w-container-max mx-auto w-full py-stack-lg">
         <div className="mb-stack-lg flex flex-col lg:flex-row lg:items-end justify-between gap-stack-md">
           <div>
-            <p className="font-label-md text-primary mb-unit">Konto klienta</p>
+            <button 
+              onClick={() => onNavigate?.("/customer-dashboard")}
+              className="text-primary font-label-md hover:underline inline-flex items-center gap-1 mb-2"
+            >
+              <span className="material-symbols-outlined text-sm">arrow_back</span> Powrót do panelu
+            </button>
             <h1 className="font-display-lg-mobile md:font-display-lg text-on-background mb-stack-sm">
               Twoja historia podróży
             </h1>
@@ -57,65 +78,88 @@ const ClientRentHistory: React.FC = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-stack-sm">
-            {["Wszystkie", "Oczekuje", "W trakcie", "Zakończony", "Anulowany"].map(
-              (filter, index) => (
-                <button
-                  className={`rounded-full px-4 py-2 text-sm font-label-md ${
-                    index === 0
-                      ? "bg-primary text-on-primary"
-                      : "bg-surface-container-low border border-outline-variant text-on-surface"
-                  }`}
-                  key={filter}
-                >
-                  {filter}
-                </button>
-              ),
-            )}
+            {["Wszystkie", "Oczekuje", "W trakcie", "Zakończony", "Anulowany"].map((item) => (
+              <button
+                className={`rounded-full px-4 py-2 text-sm font-label-md transition-all ${
+                  filter === item
+                    ? "bg-primary text-on-primary shadow-sm"
+                    : "bg-surface-container-low border border-outline-variant text-on-surface hover:bg-surface-container"
+                }`}
+                key={item}
+                onClick={() => setFilter(item)}
+              >
+                {item}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-stack-md">
-          {rentals.map((rent) => (
-            <article
-              className="bg-surface-container-lowest rounded-xl border border-tertiary-fixed p-6 shadow-sm hover:shadow-md transition-all"
-              key={rent.id}
-            >
-              <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-                <div className="w-full md:w-48 h-32 rounded-lg bg-surface-container overflow-hidden">
-                  <img
-                    alt={rent.car}
-                    className="w-full h-full object-cover"
-                    src={rent.image}
-                  />
-                </div>
-                <div className="flex-grow flex flex-col gap-2">
-                  <div className="flex flex-wrap gap-stack-sm items-center">
-                    <h3 className="font-headline-sm text-on-background">{rent.car}</h3>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-label-md ${
-                        statusClass[rent.status]
-                      }`}
-                    >
-                      {rent.status}
-                    </span>
+        {error && (
+          <div className="bg-error-container/20 border border-error-container text-on-error-container p-4 rounded-xl text-sm mb-6">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+          </div>
+        ) : filteredRentals.length > 0 ? (
+          <div className="grid grid-cols-1 gap-stack-md">
+            {filteredRentals.map((rent) => {
+              const statusText = getStatusLabel(rent.status);
+              return (
+                <article
+                  className="bg-surface-container-lowest rounded-xl border border-tertiary-fixed p-6 shadow-sm hover:shadow-md transition-all"
+                  key={rent.rentId}
+                >
+                  <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
+                    {rent.imageUrl && (
+                      <div className="w-full md:w-48 h-32 rounded-lg bg-surface-container overflow-hidden flex-shrink-0">
+                        <img
+                          alt={`${rent.brandName} ${rent.modelName}`}
+                          className="w-full h-full object-cover"
+                          src={rent.imageUrl}
+                        />
+                      </div>
+                    )}
+                    <div className="flex-grow flex flex-col gap-2 overflow-hidden">
+                      <div className="flex flex-wrap gap-3 items-center">
+                        <h3 className="font-headline-sm text-on-background font-bold">{rent.brandName} {rent.modelName}</h3>
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-label-md ${
+                            statusClass[statusText] || "bg-outline text-on-surface"
+                          }`}
+                        >
+                          {statusText}
+                        </span>
+                      </div>
+                      <p className="font-label-md text-on-background">
+                        <span className="material-symbols-outlined text-sm align-middle mr-1">calendar_today</span>
+                        {formatDateRange(rent.startDate, rent.expectedEndDate)}
+                      </p>
+                      <p className="font-body-sm text-on-surface-variant truncate">
+                        VIN: {rent.VIN} • Tablice: {rent.registrationNumber || 'Brak'}
+                      </p>
+                      <p className="font-body-sm text-on-surface-variant">
+                        Numer rezerwacji: RES-{rent.rentId}
+                      </p>
+                    </div>
+                    <div className="md:text-right w-full md:w-auto flex-shrink-0">
+                      <p className="font-body-sm text-on-surface-variant">Całkowity koszt</p>
+                      <p className="font-headline-md text-primary font-bold text-xl">{rent.totalCost || '—'} PLN</p>
+                    </div>
                   </div>
-                  <p className="font-label-md text-on-background">{rent.dates}</p>
-                  <p className="font-body-sm text-on-surface-variant">{rent.branch}</p>
-                  <p className="font-body-sm text-on-surface-variant">
-                    Numer: {rent.id} • Płatność: {rent.payment}
-                  </p>
-                </div>
-                <div className="md:text-right">
-                  <p className="font-body-sm text-on-surface-variant">Całkowity koszt</p>
-                  <p className="font-headline-md text-primary">{rent.cost}</p>
-                  <button className="mt-stack-sm rounded-lg border border-primary px-4 py-2 text-sm font-label-md text-primary">
-                    Szczegóły
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-surface-container-lowest rounded-2xl border border-[#E5E1D5] p-12 text-center shadow-lg">
+            <span className="material-symbols-outlined text-5xl text-on-surface-variant/50 mb-3">history</span>
+            <p className="font-body-md text-on-surface-variant">Brak wynajmów spełniających wybrane kryteria.</p>
+          </div>
+        )}
       </main>
     </div>
   );

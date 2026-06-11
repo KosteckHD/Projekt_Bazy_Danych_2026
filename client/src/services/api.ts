@@ -85,8 +85,16 @@ export async function fetchBrands(): Promise<Brand[]> {
   return res.json();
 }
 
-export async function fetchCars(): Promise<Car[]> {
-  const res = await fetch(`${API_BASE_URL}/cars`);
+export async function fetchCars(filters?: { startDate?: string; expectedEndDate?: string }): Promise<Car[]> {
+  let url = `${API_BASE_URL}/cars`;
+  if (filters?.startDate && filters?.expectedEndDate) {
+    const q = new URLSearchParams({
+      startDate: filters.startDate,
+      expectedEndDate: filters.expectedEndDate,
+    });
+    url += `?${q.toString()}`;
+  }
+  const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch cars: ${res.statusText}`);
   }
@@ -212,4 +220,73 @@ export async function uploadCarImage(fileName: string, base64Data: string): Prom
     throw new Error(data.message || "Failed to upload image");
   }
   return data;
+}
+
+export async function fetchMyRents(): Promise<RentResponse[]> {
+  const res = await fetch(`${API_BASE_URL}/rents/my`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function fetchRents(): Promise<RentResponse[]> {
+  const res = await fetch(`${API_BASE_URL}/rents`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function startRent(id: number): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/rents/${id}/start`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function finishRent(id: number, data: { carStatus?: string; mileage?: number; paymentMethod?: string } = {}): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/rents/${id}/finish`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({
+      carStatus: data.carStatus || "Available",
+      paymentMethod: data.paymentMethod || "Card",
+      ...data
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
+}
+
+export async function cancelNoShowRent(id: number): Promise<any> {
+  const res = await fetch(`${API_BASE_URL}/rents/${id}/cancel-no-show`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    throw new Error(await parseApiError(res));
+  }
+  return res.json();
 }

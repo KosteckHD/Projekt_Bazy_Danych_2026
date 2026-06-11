@@ -103,6 +103,20 @@ const WorkerCreateRent: React.FC<WorkerCreateRentProps> = ({ cars, onRentalCreat
       return;
     }
 
+    const start = new Date(startDate);
+    const end = new Date(expectedEndDate);
+    const nowTime = new Date();
+
+    if (start.getTime() < nowTime.getTime() - 10 * 60 * 1000) {
+      setError("Niepoprawna data: data rozpoczęcia wynajmu nie może być w przeszłości.");
+      return;
+    }
+
+    if (end.getTime() - start.getTime() < 60 * 60 * 1000) {
+      setError("Niepoprawny okres: minimalny okres wynajmu to 1 godzina.");
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError(null);

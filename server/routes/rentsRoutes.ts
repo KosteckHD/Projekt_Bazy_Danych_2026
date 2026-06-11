@@ -57,6 +57,7 @@ const cancelNoShowSchema = z.object({
 });
 
 router.get('/', authenticate, requireRoles('Worker', 'Manager', 'Admin'), asyncHandler(rentsController.listRents));
+router.get('/my', authenticate, asyncHandler(rentsController.listMyRents));
 router.get('/current', authenticate, requireRoles('Worker', 'Manager', 'Admin'), asyncHandler(rentsController.listCurrentRents));
 router.get('/pending', authenticate, requireRoles('Worker', 'Manager', 'Admin'), asyncHandler(rentsController.listPendingRents));
 router.get('/overdue', authenticate, requireRoles('Worker', 'Manager', 'Admin'), asyncHandler(rentsController.listOverdueRents));

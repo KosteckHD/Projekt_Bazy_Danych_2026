@@ -24,18 +24,24 @@ const diffHours = (startDate: string, endDate: string): number => {
   return diff > 0 ? Math.max(1, Math.ceil(diff / 3_600_000)) : 0;
 };
 
+const getLocalISOString = (date: Date) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const y = date.getFullYear();
+  const m = pad(date.getMonth() + 1);
+  const d = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  return `${y}-${m}-${d}T${hh}:${mm}`;
+};
+
 const defaultStartDate = () => {
-  const date = new Date();
-  date.setDate(date.getDate() + 7);
-  date.setHours(date.getHours() + 2, 0, 0, 0);
-  return date.toISOString().slice(0, 16);
+  return getLocalISOString(new Date());
 };
 
 const defaultEndDate = () => {
   const date = new Date();
-  date.setDate(date.getDate() + 9);
-  date.setHours(date.getHours() + 2, 0, 0, 0);
-  return date.toISOString().slice(0, 16);
+  date.setDate(date.getDate() + 1);
+  return getLocalISOString(date);
 };
 
 const ClientCreateReservation: React.FC = () => {
@@ -106,8 +112,28 @@ const ClientCreateReservation: React.FC = () => {
   }, [requestedCarId]);
 
   useEffect(() => {
-    if (!selectedCar || !startDate || !expectedEndDate || hours <= 0) {
+    if (!selectedCar || !startDate || !expectedEndDate) {
       setAvailability(null);
+      return;
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(expectedEndDate);
+    const now = new Date();
+
+    if (start.getTime() < now.getTime() - 10 * 60 * 1000) {
+      setAvailability({
+        available: false,
+        reason: "Niepoprawna data: data rozpoczęcia wynajmu nie może być w przeszłości.",
+      });
+      return;
+    }
+
+    if (end.getTime() - start.getTime() < 60 * 60 * 1000) {
+      setAvailability({
+        available: false,
+        reason: "Niepoprawny okres: minimalny okres wynajmu to 1 godzina.",
+      });
       return;
     }
 

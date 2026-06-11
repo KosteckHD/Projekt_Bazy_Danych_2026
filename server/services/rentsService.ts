@@ -44,9 +44,11 @@ const rentSelect = `
     r.userId AS "userId",
     u.firstName AS "firstName",
     u.lastName AS "lastName",
+    u.email AS "email",
     r.carId AS "carId",
     c.VIN AS "VIN",
     c.registrationNumber AS "registrationNumber",
+    c.imageUrl AS "imageUrl",
     m.modelName AS "modelName",
     b.brandName AS "brandName",
     r.workerId AS "workerId",
@@ -57,6 +59,7 @@ const rentSelect = `
     r.endDate AS "endDate",
     r.additionalCost::float AS "additionalCost",
     r.totalCost::float AS "totalCost",
+    m.hourlyCost::float AS "hourlyCost",
     r.status,
     r.createdAt AS "createdAt",
     r.updatedAt AS "updatedAt"
@@ -69,6 +72,10 @@ const rentSelect = `
 
 export async function listRents() {
   return query(`${rentSelect} ORDER BY r.startDate DESC`);
+}
+
+export async function listMyRents(userId: number) {
+  return query(`${rentSelect} WHERE r.userId = $1 ORDER BY r.startDate DESC`, [userId]);
 }
 
 export async function listCurrentRents() {
@@ -113,8 +120,16 @@ export async function checkAvailability(
   expectedEndDate: string,
   ignoreRentId?: number,
 ) {
-  if (new Date(expectedEndDate) <= new Date(startDate)) {
-    badRequest('expectedEndDate must be after startDate');
+  const start = new Date(startDate);
+  const end = new Date(expectedEndDate);
+  const now = new Date();
+
+  if (start.getTime() < now.getTime() - 10 * 60 * 1000) {
+    badRequest('Niepoprawna data: data rozpoczęcia wynajmu nie może być w przeszłości.');
+  }
+
+  if (end.getTime() - start.getTime() < 60 * 60 * 1000) {
+    badRequest('Niepoprawny okres: minimalny okres wynajmu to 1 godzina.');
   }
 
   const car = await queryOne<{ status: string; isactive: boolean }>(
@@ -141,9 +156,12 @@ export async function checkAvailability(
     ignoreClause = `AND rentId <> $${values.length}`;
   }
 
-  const overlapping = await queryOne<{ rentid: number }>(
+  const overlapping = await queryOne<{ rentid: number; startdate: Date; enddate: Date }>(
     `
-      SELECT rentId
+      SELECT 
+        rentId AS "rentid", 
+        startDate AS "startdate", 
+        COALESCE(endDate, expectedEndDate) AS "enddate"
       FROM Rents
       WHERE carId = $1
         AND status IN ('Pending', 'Started')
@@ -156,7 +174,22 @@ export async function checkAvailability(
   );
 
   if (overlapping) {
-    return { available: false, reason: 'Car already has a rent in this period' };
+    const formatDate = (date: Date) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const y = date.getFullYear();
+      const m = pad(date.getMonth() + 1);
+      const d = pad(date.getDate());
+      const hh = pad(date.getHours());
+      const mm = pad(date.getMinutes());
+      return `${y}-${m}-${d} ${hh}:${mm}`;
+    };
+
+    const startFmt = formatDate(new Date(overlapping.startdate));
+    const endFmt = formatDate(new Date(overlapping.enddate));
+    return { 
+      available: false, 
+      reason: `Pojazd jest już zarezerwowany/wynajęty w okresie od ${startFmt} do ${endFmt}.` 
+    };
   }
 
   return { available: true };
@@ -429,7 +462,10 @@ export async function finishRent(id: number, input: FinishRentInput) {
       conflict('Only started rent can be finished');
     }
 
-    const endDate = input.endDate ? new Date(input.endDate) : new Date();
+    let endDate = input.endDate ? new Date(input.endDate) : new Date();
+    if (endDate < current.startdate) {
+      endDate = new Date(current.startdate.getTime() + 1000);
+    }
     const returnBranchId = input.returnBranchId ?? current.returnbranchid ?? current.carbranchid;
     await ensureBranchStaff(input.staffId, returnBranchId, 'finish rent');
 

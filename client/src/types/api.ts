@@ -37,6 +37,8 @@ export interface Car {
   country: string;
   imageurl?: string | null;
   imageUrl?: string | null;
+  renteduntil?: string | null;
+  rentedUntil?: string | null;
 }
 
 export interface PopularCarStat {
@@ -130,11 +132,29 @@ export interface RentResponse {
   returnBranchId: number | null;
   startDate: string;
   expectedEndDate: string;
+  endDate?: string | null;
+  enddate?: string | null;
   additionalCost: number;
   totalCost: number;
+  totalcost?: number;
+  hourlyCost?: number;
+  hourlycost?: number;
   status: "Pending" | "Started" | "Ended" | "Cancelled";
   createdAt: string;
   updatedAt: string;
+  firstName?: string;
+  firstname?: string;
+  lastName?: string;
+  lastname?: string;
+  VIN?: string;
+  vin?: string;
+  registrationNumber?: string | null;
+  imageUrl?: string | null;
+  modelName?: string;
+  modelname?: string;
+  brandName?: string;
+  brandname?: string;
+  email?: string;
 }
 
 export interface User {
