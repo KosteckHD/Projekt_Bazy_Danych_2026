@@ -35,6 +35,8 @@ export interface Car {
   brandname: string;
   brandName?: string;
   country: string;
+  imageurl?: string | null;
+  imageUrl?: string | null;
 }
 
 export interface PopularCarStat {
@@ -63,6 +65,7 @@ export interface NewCarData {
   carEngine: string | number;
   horsePower: string | number;
   bodyType: string;
+  imageUrl?: string;
 }
 
 export interface AddCarResponse {

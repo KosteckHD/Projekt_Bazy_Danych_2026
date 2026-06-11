@@ -148,6 +148,7 @@ CREATE TABLE IF NOT EXISTS Cars (
     carEngine DECIMAL(3, 1) NOT NULL CHECK (carEngine >= 0),
     horsePower INTEGER NOT NULL CHECK (horsePower > 0),
     bodyType BodyTypes NOT NULL,
+    imageUrl VARCHAR(2048),
     isActive BOOLEAN NOT NULL DEFAULT TRUE,
     createdAt TIMESTAMP NOT NULL DEFAULT NOW(),
     updatedAt TIMESTAMP NOT NULL DEFAULT NOW()

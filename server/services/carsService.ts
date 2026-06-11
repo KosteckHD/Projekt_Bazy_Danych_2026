@@ -22,6 +22,7 @@ export type CarInput = {
   horsePower: number;
   bodyType: string;
   isActive?: boolean;
+  imageUrl?: string | null;
 };
 
 export type CarFilters = {
@@ -56,6 +57,7 @@ const carSelect = `
     c.carEngine::float AS "carEngine",
     c.horsePower AS "horsePower",
     c.bodyType AS "bodyType",
+    c.imageUrl AS "imageUrl",
     c.isActive AS "isActive",
     c.createdAt AS "createdAt",
     c.updatedAt AS "updatedAt"
@@ -183,9 +185,9 @@ export async function createCar(input: CarInput) {
         `
           INSERT INTO Cars (
             modelId, branchId, status, color, doorAmount, productionDate, VIN,
-            registrationNumber, mileage, carEngine, horsePower, bodyType
+            registrationNumber, mileage, carEngine, horsePower, bodyType, imageUrl
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
           RETURNING
             carId AS "carId",
             modelId AS "modelId",
@@ -200,6 +202,7 @@ export async function createCar(input: CarInput) {
             carEngine::float AS "carEngine",
             horsePower AS "horsePower",
             bodyType AS "bodyType",
+            imageUrl AS "imageUrl",
             isActive AS "isActive",
             createdAt AS "createdAt",
             updatedAt AS "updatedAt"
@@ -217,6 +220,7 @@ export async function createCar(input: CarInput) {
           input.carEngine,
           input.horsePower,
           input.bodyType,
+          input.imageUrl ?? null,
         ]
       );
 
@@ -228,9 +232,9 @@ export async function createCar(input: CarInput) {
     `
       INSERT INTO Cars (
         modelId, branchId, status, color, doorAmount, productionDate, VIN,
-        registrationNumber, mileage, carEngine, horsePower, bodyType
+        registrationNumber, mileage, carEngine, horsePower, bodyType, imageUrl
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
       RETURNING
         carId AS "carId",
         modelId AS "modelId",
@@ -245,6 +249,7 @@ export async function createCar(input: CarInput) {
         carEngine::float AS "carEngine",
         horsePower AS "horsePower",
         bodyType AS "bodyType",
+        imageUrl AS "imageUrl",
         isActive AS "isActive",
         createdAt AS "createdAt",
         updatedAt AS "updatedAt"
@@ -262,6 +267,7 @@ export async function createCar(input: CarInput) {
       input.carEngine,
       input.horsePower,
       input.bodyType,
+      input.imageUrl ?? null,
     ],
   );
 }
@@ -284,6 +290,7 @@ export async function updateCar(id: number, input: Partial<CarInput>) {
       horsePower: 'horsePower',
       bodyType: 'bodyType',
       isActive: 'isActive',
+      imageUrl: 'imageUrl',
     },
     values,
   );
@@ -308,6 +315,7 @@ export async function updateCar(id: number, input: Partial<CarInput>) {
         carEngine::float AS "carEngine",
         horsePower AS "horsePower",
         bodyType AS "bodyType",
+        imageUrl AS "imageUrl",
         isActive AS "isActive",
         createdAt AS "createdAt",
         updatedAt AS "updatedAt"

@@ -32,6 +32,7 @@ const carCreateBase = {
   carEngine: z.coerce.number().nonnegative(),
   horsePower: z.coerce.number().int().positive(),
   bodyType: z.enum(bodyTypes),
+  imageUrl: z.string().trim().max(2048).optional().nullable(),
 };
 
 const carCreateWithModelIdSchema = z.object({

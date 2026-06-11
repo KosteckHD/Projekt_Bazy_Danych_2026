@@ -98,6 +98,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     carEngine: "2.0",
     horsePower: "150",
     bodyType: "SEDAN",
+    imageUrl: "",
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -140,6 +141,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         hourlyCost: "",
         modelDescription: "",
         VIN: "",
+        imageUrl: "",
       }));
 
       onCarAdded();
@@ -249,82 +251,99 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 {cars.map((car) => (
                   <div
                     key={car.carid}
-                    className="bg-white rounded-[1.5rem] overflow-hidden border border-outline-variant/60 car-card-shadow p-6 flex flex-col justify-between"
+                    className="bg-white rounded-[1.5rem] overflow-hidden border border-outline-variant/60 car-card-shadow flex flex-col justify-between"
                   >
-                    <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full text-xs font-semibold">
-                          {car.brandname}
-                        </span>
-                        <span
-                          className={`text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider ${
-                            car.status === "Available"
-                              ? "bg-secondary-container text-on-secondary-container"
+                    {/* Header Image */}
+                    {(car.imageUrl || car.imageurl) ? (
+                      <div className="relative h-48 w-full bg-surface-variant">
+                        <img
+                          alt={`${car.brandname} ${car.modelname}`}
+                          className="w-full h-full object-cover"
+                          src={car.imageUrl || car.imageurl || ""}
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative h-48 w-full bg-surface-variant/40 flex items-center justify-center text-on-surface-variant/40">
+                        <span className="material-symbols-outlined text-5xl">directions_car</span>
+                      </div>
+                    )}
+                    
+                    <div className="p-6 flex-grow flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full text-xs font-semibold">
+                            {car.brandname}
+                          </span>
+                          <span
+                            className={`text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider ${
+                              car.status === "Available"
+                                ? "bg-secondary-container text-on-secondary-container"
+                                : car.status === "Rented"
+                                  ? "bg-primary-fixed text-on-primary-fixed-variant"
+                                  : "bg-surface-container-highest text-on-surface-variant"
+                            }`}
+                          >
+                            {car.status === "Available"
+                              ? "Dostępny"
                               : car.status === "Rented"
-                                ? "bg-primary-fixed text-on-primary-fixed-variant"
-                                : "bg-surface-container-highest text-on-surface-variant"
-                          }`}
+                                ? "Wypożyczony"
+                                : car.status === "Maintenance"
+                                  ? "Serwis"
+                                  : "Uszkodzony"}
+                          </span>
+                        </div>
+                        <h3 className="font-headline-sm text-lg text-on-surface font-semibold mb-4">
+                          {car.modelname}
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-3 text-xs text-on-surface-variant mb-6">
+                          <div className="flex items-center gap-1.5 bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
+                            <span className="material-symbols-outlined text-[16px] text-primary">
+                              bolt
+                            </span>
+                            <span>{car.horsepower} KM</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
+                            <span className="material-symbols-outlined text-[16px] text-primary">
+                              local_gas_station
+                            </span>
+                            <span>
+                              {Number(car.carengine) > 0
+                                ? `${car.carengine}L`
+                                : "Elektryczny"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
+                            <span className="material-symbols-outlined text-[16px] text-primary">
+                              palette
+                            </span>
+                            <span>{car.color}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
+                            <span className="material-symbols-outlined text-[16px] text-primary">
+                              directions_car
+                            </span>
+                            <span>{car.bodytype}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4 border-t border-outline-variant/40">
+                        <div className="text-primary font-bold text-lg">
+                          {car.hourlycost} PLN{" "}
+                          <span className="text-on-surface-variant font-normal text-xs">
+                            / godz.
+                          </span>
+                        </div>
+                        <div
+                          className="text-xs text-on-surface-variant bg-surface-container-high px-2 py-1 rounded"
+                          title={`VIN: ${car.vin}`}
                         >
-                          {car.status === "Available"
-                            ? "Dostępny"
-                            : car.status === "Rented"
-                              ? "Wypożyczony"
-                              : car.status === "Maintenance"
-                                ? "Serwis"
-                                : "Uszkodzony"}
-                        </span>
-                      </div>
-                      <h3 className="font-headline-sm text-lg text-on-surface font-semibold mb-4">
-                        {car.modelname}
-                      </h3>
-
-                      <div className="grid grid-cols-2 gap-3 text-xs text-on-surface-variant mb-6">
-                        <div className="flex items-center gap-1.5 bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
-                          <span className="material-symbols-outlined text-[16px] text-primary">
-                            bolt
-                          </span>
-                          <span>{car.horsepower} KM</span>
+                          VIN:{" "}
+                          <code className="font-mono">
+                            {car.vin.substring(0, 5)}...{car.vin.substring(12)}
+                          </code>
                         </div>
-                        <div className="flex items-center gap-1.5 bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
-                          <span className="material-symbols-outlined text-[16px] text-primary">
-                            local_gas_station
-                          </span>
-                          <span>
-                            {Number(car.carengine) > 0
-                              ? `${car.carengine}L`
-                              : "Elektryczny"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
-                          <span className="material-symbols-outlined text-[16px] text-primary">
-                            palette
-                          </span>
-                          <span>{car.color}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
-                          <span className="material-symbols-outlined text-[16px] text-primary">
-                            directions_car
-                          </span>
-                          <span>{car.bodytype}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-4 border-t border-outline-variant/40">
-                      <div className="text-primary font-bold text-lg">
-                        {car.hourlycost} PLN{" "}
-                        <span className="text-on-surface-variant font-normal text-xs">
-                          / godz.
-                        </span>
-                      </div>
-                      <div
-                        className="text-xs text-on-surface-variant bg-surface-container-high px-2 py-1 rounded"
-                        title={`VIN: ${car.vin}`}
-                      >
-                        VIN:{" "}
-                        <code className="font-mono">
-                          {car.vin.substring(0, 5)}...{car.vin.substring(12)}
-                        </code>
                       </div>
                     </div>
                   </div>
@@ -727,6 +746,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </option>
                       ))}
                     </select>
+                  </div>
+                  <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                    <label
+                      className="text-xs font-semibold text-on-surface-variant ml-1"
+                      htmlFor="imageUrl"
+                    >
+                      URL Zdjęcia Pojazdu
+                    </label>
+                    <input
+                      type="url"
+                      id="imageUrl"
+                      name="imageUrl"
+                      placeholder="https://example.com/image.jpg"
+                      value={formData.imageUrl}
+                      onChange={handleInputChange}
+                      className="w-full bg-surface-container-low border border-outline-variant/50 rounded-xl p-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none text-on-surface text-sm"
+                    />
                   </div>
                 </div>
               </div>
