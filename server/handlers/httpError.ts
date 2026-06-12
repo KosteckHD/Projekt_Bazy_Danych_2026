@@ -19,3 +19,7 @@ export function conflict(message: string, details?: unknown): never {
 export function badRequest(message: string, details?: unknown): never {
   throw new HttpError(400, message, details);
 }
+
+export function unauthorized(message = 'Unauthorized', details?: unknown): never {
+  throw new HttpError(401, message, details);
+}

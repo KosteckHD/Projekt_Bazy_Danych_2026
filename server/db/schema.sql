@@ -259,3 +259,23 @@ CREATE INDEX IF NOT EXISTS idx_transactions_status ON TransactionHistory (status
 INSERT INTO Branches (branchName, address, phone, email, isActive)
 VALUES ('Warszawa Centrum', 'ul. Marszalkowska 1, Warszawa', '123456789', 'warszawa@harvestmotion.pl', TRUE)
 ON CONFLICT DO NOTHING;
+
+-- Seed test admin account for local development
+INSERT INTO Users (email, passwordHash, firstName, lastName, phone, role, isActive)
+VALUES (
+    'admin@admin.com',
+    '$2b$12$NxzSGFQyOVTdXoVu123a7uZL5Vh1JJU2DQTTGMzP0KU7wNAjP1blG',
+    'Admin',
+    'Test',
+    '+48000000001',
+    'Admin',
+    TRUE
+)
+ON CONFLICT (email) DO UPDATE
+SET
+    passwordHash = EXCLUDED.passwordHash,
+    firstName = EXCLUDED.firstName,
+    lastName = EXCLUDED.lastName,
+    role = EXCLUDED.role,
+    isActive = TRUE,
+    updatedAt = NOW();

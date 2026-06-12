@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { queryOne } from '../config/db.js';
-import { conflict } from '../handlers/httpError.js';
+import { conflict, unauthorized } from '../handlers/httpError.js';
 
 const jwtSecret = process.env.JWT_SECRET ?? 'dev-secret-change-me';
 const jwtExpiresIn = (process.env.JWT_EXPIRES_IN ?? '8h') as NonNullable<jwt.SignOptions['expiresIn']>;
@@ -43,12 +43,12 @@ export async function login(email: string, password: string) {
   );
 
   if (!user || user.isactive === false || user.role === 'Banned') {
-    conflict('Invalid email or password');
+    unauthorized('Invalid email or password');
   }
 
   const passwordMatches = await bcrypt.compare(password, user.passwordhash);
   if (!passwordMatches) {
-    conflict('Invalid email or password');
+    unauthorized('Invalid email or password');
   }
 
   const payload: JwtPayload = {

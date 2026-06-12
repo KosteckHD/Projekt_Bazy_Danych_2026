@@ -27,7 +27,7 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
     };
     next();
   } catch (error) {
-    next(error);
+    next(new HttpError(401, 'Invalid or expired token'));
   }
 }
 
