@@ -49,9 +49,9 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="font-body-md text-on-background bg-[#f9f5eb] min-h-screen flex">
+    <div className="font-body-md text-on-background bg-[#f9f5eb] min-h-screen">
       {/* Sidebar */}
-      <aside className="w-64 fixed left-0 top-0 bottom-0 bg-surface-container-low border-r border-outline-variant flex flex-col py-6 px-4 z-10">
+      <aside className="hidden">
         <div className="mb-8 px-4 flex items-center justify-between">
           <h1 className="font-headline-sm text-headline-sm text-primary font-bold">Harvest Motion</h1>
         </div>
@@ -106,7 +106,7 @@ const ClientDashboard: React.FC<ClientDashboardProps> = ({ onNavigate }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow ml-64 p-8 max-w-5xl">
+      <main className="w-full max-w-5xl mx-auto p-8">
         <header className="mb-8 flex justify-between items-end">
           <div>
             <h2 className="font-headline-md text-3xl font-bold text-on-surface">Witaj z powrotem{user ? `, ${user.firstName}` : ''}!</h2>
