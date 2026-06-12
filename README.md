@@ -1,4 +1,4 @@
-# bazy-danych-projekt
+# bazy-danych-projekt-42
 
 Project for Data Bases course at AGH University.
 
